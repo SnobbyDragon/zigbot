@@ -1,5 +1,7 @@
 package zigbotplayer;
+
 import battlecode.common.*;
+
 /* Chris Kimmel was here */
 public strictfp class RobotPlayer {
     static RobotController rc;
@@ -18,6 +20,15 @@ public strictfp class RobotPlayer {
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
 
     static int turnCount;
+
+    public static Direction oppositeDirection(Direction d) throws RuntimeException {
+        for (int i = 0; i < directions.length; i++) {
+            if (directions[i] == d) {
+                return directions[(i + 4) % directions.length];
+            }
+        }
+        throw new RuntimeException("No opposite direction found");
+    }
 
     /**
      * run() is the method that is called when a robot is instantiated in the Battlecode world.
@@ -39,17 +50,35 @@ public strictfp class RobotPlayer {
             try {
                 // Here, we've separated the controls into a different method for each RobotType.
                 // You can add the missing ones or rewrite this into your own control structure.
-                System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
+                // System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
                 switch (rc.getType()) {
-                    case HQ:                 runHQ();                break;
-                    case MINER:              Miner.runMiner();             break;
-                    case REFINERY:           runRefinery();          break;
-                    case VAPORATOR:          runVaporator();         break;
-                    case DESIGN_SCHOOL:      runDesignSchool();      break;
-                    case FULFILLMENT_CENTER: runFulfillmentCenter(); break;
-                    case LANDSCAPER:         runLandscaper();        break;
-                    case DELIVERY_DRONE:     runDeliveryDrone();     break;
-                    case NET_GUN:            runNetGun();            break;
+                    case HQ:
+                        runHQ();
+                        break;
+                    case MINER:
+                        Miner.runMiner();
+                        break;
+                    case REFINERY:
+                        runRefinery();
+                        break;
+                    case VAPORATOR:
+                        runVaporator();
+                        break;
+                    case DESIGN_SCHOOL:
+                        runDesignSchool();
+                        break;
+                    case FULFILLMENT_CENTER:
+                        runFulfillmentCenter();
+                        break;
+                    case LANDSCAPER:
+                        runLandscaper();
+                        break;
+                    case DELIVERY_DRONE:
+                        runDeliveryDrone();
+                        break;
+                    case NET_GUN:
+                        runNetGun();
+                        break;
                 }
 
                 // Clock.yield() makes the robot wait until the next turn, then it will perform this loop again
@@ -64,10 +93,9 @@ public strictfp class RobotPlayer {
 
     static void runHQ() throws GameActionException {
         int count = 0;
-        while(true) {
+        while (true) {
             for (Direction dir : directions)
-                if (count < 4) {
-                    tryBuild(RobotType.MINER, dir);
+                if (count < 4 && tryBuild(RobotType.MINER, dir)) {
                     count++;
                 }
         }
@@ -168,41 +196,13 @@ public strictfp class RobotPlayer {
      * Attempts to build a given robot in a given direction.
      *
      * @param type The type of the robot to build
-     * @param dir The intended direction of movement
+     * @param dir  The intended direction of movement
      * @return true if a move was performed
      * @throws GameActionException
      */
     static boolean tryBuild(RobotType type, Direction dir) throws GameActionException {
         if (rc.isReady() && rc.canBuildRobot(type, dir)) {
             rc.buildRobot(type, dir);
-            return true;
-        } else return false;
-    }
-
-    /**
-     * Attempts to mine soup in a given direction.
-     *
-     * @param dir The intended direction of mining
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryMine(Direction dir) throws GameActionException {
-        if (rc.isReady() && rc.canMineSoup(dir)) {
-            rc.mineSoup(dir);
-            return true;
-        } else return false;
-    }
-
-    /**
-     * Attempts to refine soup in a given direction.
-     *
-     * @param dir The intended direction of refining
-     * @return true if a move was performed
-     * @throws GameActionException
-     */
-    static boolean tryRefine(Direction dir) throws GameActionException {
-        if (rc.isReady() && rc.canDepositSoup(dir)) {
-            rc.depositSoup(dir, rc.getSoupCarrying());
             return true;
         } else return false;
     }
