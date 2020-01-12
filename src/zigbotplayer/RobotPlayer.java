@@ -63,22 +63,14 @@ public strictfp class RobotPlayer {
     }
 
     static void runHQ() throws GameActionException {
-        for (Direction dir : directions)
-            tryBuild(RobotType.MINER, dir);
-    }
-
-    static void runMiner() throws GameActionException {
-        tryBlockchain();
-        tryMove(randomDirection());
-        System.out.println("I mined soup! " + rc.getSoupCarrying());
-        if (tryMove(randomDirection()))
-            System.out.println("I moved!");
-        // tryBuild(randomSpawnedByMiner(), randomDirection());
-        for (Direction dir : directions)
-            tryBuild(RobotType.FULFILLMENT_CENTER, dir);
-        for (Direction dir : directions)
-            if (tryRefine(dir))
-                System.out.println("I refined soup! " + rc.getTeamSoup());
+        int count = 0;
+        while(true) {
+            for (Direction dir : directions)
+                if (count < 4) {
+                    tryBuild(RobotType.MINER, dir);
+                    count++;
+                }
+        }
     }
 
     static void runRefinery() throws GameActionException {
