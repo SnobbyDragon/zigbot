@@ -25,6 +25,7 @@ src/lectureplayer
 # User-specific stuff:
 battlecode-scaffold.iws
 build.gradle
+gradle.properties
 
 # Eclipse user-specific files
 .classpath
