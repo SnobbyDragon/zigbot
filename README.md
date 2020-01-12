@@ -1,6 +1,6 @@
 # Battlecode 2020 Scaffold
 
-This is the Battlecode 2020 scaffold, containing an `examplefuncsplayer`. Read https://2020.battlecode.org/getting-started!
+This is the Battlecode 2020  scaffold, containing an `examplefuncsplayer`. Read https://2020.battlecode.org/getting-started!
 
 ### Project Structure
 
