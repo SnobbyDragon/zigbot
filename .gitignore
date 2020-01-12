@@ -22,9 +22,9 @@ src/lectureplayer
 *.iws
 /.idea/
 
-
 # User-specific stuff:
 battlecode-scaffold.iws
+build.gradle
 
 # Eclipse user-specific files
 .classpath
