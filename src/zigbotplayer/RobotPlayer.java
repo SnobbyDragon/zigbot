@@ -63,14 +63,8 @@ public strictfp class RobotPlayer {
     }
 
     static void runHQ() throws GameActionException {
-        int count = 0;
-        while(true) {
-            for (Direction dir : directions)
-                if (count < 4) {
-                    tryBuild(RobotType.MINER, dir);
-                    count++;
-                }
-        }
+        for (Direction dir : directions)
+            tryBuild(RobotType.MINER, dir);
     }
 
     static void runRefinery() throws GameActionException {
