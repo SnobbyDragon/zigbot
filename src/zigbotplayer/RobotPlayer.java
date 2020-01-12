@@ -1,6 +1,6 @@
 package zigbotplayer;
 import battlecode.common.*;
-
+/* Chris Kimmel was here */
 public strictfp class RobotPlayer {
     static RobotController rc;
 
