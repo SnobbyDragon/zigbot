@@ -70,6 +70,7 @@ public strictfp class RobotPlayer {
     static void runMiner() throws GameActionException {
         tryBlockchain();
         tryMove(randomDirection());
+        System.out.println("I mined soup! " + rc.getSoupCarrying());
         if (tryMove(randomDirection()))
             System.out.println("I moved!");
         // tryBuild(randomSpawnedByMiner(), randomDirection());
@@ -78,9 +79,6 @@ public strictfp class RobotPlayer {
         for (Direction dir : directions)
             if (tryRefine(dir))
                 System.out.println("I refined soup! " + rc.getTeamSoup());
-        for (Direction dir : directions)
-            if (tryMine(dir))
-                System.out.println("I mined soup! " + rc.getSoupCarrying());
     }
 
     static void runRefinery() throws GameActionException {
