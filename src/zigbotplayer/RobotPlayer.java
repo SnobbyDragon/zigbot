@@ -53,7 +53,7 @@ public strictfp class RobotPlayer {
                 // System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
                 switch (rc.getType()) {
                     case HQ:
-                        runHQ();
+                        HQ.runHQ();
                         break;
                     case MINER:
                         Miner.runMiner();
@@ -89,11 +89,6 @@ public strictfp class RobotPlayer {
                 e.printStackTrace();
             }
         }
-    }
-
-    static void runHQ() throws GameActionException {
-        for (Direction dir : directions)
-            tryBuild(RobotType.MINER, dir);
     }
 
     static void runRefinery() throws GameActionException {
