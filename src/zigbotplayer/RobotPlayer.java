@@ -16,6 +16,7 @@ public strictfp class RobotPlayer {
             Direction.WEST,
             Direction.NORTHWEST
     };
+
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
 
@@ -56,7 +57,7 @@ public strictfp class RobotPlayer {
                         runHQ();
                         break;
                     case MINER:
-                        Miner.runMiner();
+                        new Miner().runMiner();
                         break;
                     case REFINERY:
                         runRefinery();

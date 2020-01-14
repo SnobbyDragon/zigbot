@@ -5,25 +5,42 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.RobotType;
 
-import java.util.Queue;
-
 public class Miner extends RobotPlayer {
 
-    static void runMiner() throws GameActionException {
-        boolean mined = false;
-        for (Direction dir : directions) {
-            while (tryMine(dir)){
-                mined = true;
-                System.out.println("Done mining soup " + rc.getTeamSoup());
-                Clock.yield();
-                tryBuild(RobotType.REFINERY, oppositeDirection(dir));
+    boolean mined = false;
+
+    // nearest location of refinery
+    int dx;
+    int dy;
+
+    void runMiner() throws GameActionException {
+        while(true) {
+            minerTurn();
+            Clock.yield();
+        }
+    }
+
+    void minerTurn() throws GameActionException{
+        if(!mined) {
+            for (Direction dir : directions) {
+                if (tryMine(dir)) {
+                    mined = true;
+                    Clock.yield();
+                    System.out.println("Done mining soup " + rc.getTeamSoup());
+                    if(Math.abs(dx) + Math.abs(dy) > 7) {
+                        tryBuild(RobotType.REFINERY, oppositeDirection(dir));
+                    }
+                    return;
+                }
             }
-        }
-        if (!mined) {
             tryMove(randomDirection());
-        }
-        for(Direction dir: directions) {
-            tryRefine(dir);
+        } else {
+            for (Direction dir : directions) {
+                if(tryRefine(dir)){
+                    return;
+                }
+            }
+            tryMove(randomDirection());
         }
     }
 
