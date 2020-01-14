@@ -8,11 +8,13 @@ import battlecode.common.*;
 public class Miner extends RobotPlayer {
     boolean mined = false;
 
-    enum Goal {None, Refine, Mine}
+    enum Goal {None, Refine, Mine, Explore}
 
     ;
 
     Goal g = Goal.None;
+    Direction exploreDir = randomDirection();
+    int exploreRounds = 0;
 
     MapLocation refinery;
     MapLocation soup;
@@ -24,20 +26,25 @@ public class Miner extends RobotPlayer {
         }
     }
 
-    boolean move(Direction d) throws GameActionException {
-        boolean success = tryMove(d);
-        if(success) {
-            Clock.yield();
+    boolean generalMove(Direction d) throws GameActionException {
+        for (Direction dir : generalDirectionOf(d)) {
+            if (tryMove(dir)) {
+                return true;
+            }
         }
-        return success;
+        return false;
     }
 
     void chooseMove() throws GameActionException {
-        if (g == Goal.None) {
+        printGoal();
+        if (g == Goal.None || (g == Goal.Explore && exploreRounds <= 0)) {
             updateGoal();
         }
-        if (g == Goal.None) {
-            move(randomDirection());
+        if (g == Goal.None || g == Goal.Explore) {
+            exploreRounds--;
+            if (!generalMove(exploreDir)) {
+                exploreDir = randomDirection();
+            }
         } else {
             MapLocation dest;
             if (g == Goal.Refine) {
@@ -46,15 +53,19 @@ public class Miner extends RobotPlayer {
                 assert g == Goal.Mine;
                 dest = soup;
             }
-            printGoal();
             for (Direction d : directions) {
                 if (taxicab(rc.getLocation().add(d), dest) < taxicab(rc.getLocation(), dest)) {
-                    if (move(d)) {
-                        Clock.yield();
+                    if (tryMove(d)) {
+                        System.out.println("MOVED " + d);
                         return;
                     }
                 }
             }
+            // failed to move
+            exploreDir = randomDirection();
+            g = Goal.Explore;
+            exploreRounds = (int) (Math.random() * 10);
+            System.out.println("EXPLORE FOR  " + exploreRounds);
         }
     }
 
@@ -62,24 +73,32 @@ public class Miner extends RobotPlayer {
         return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
-    void updateGoal() throws GameActionException {
-        MapLocation goal = null;
+    MapLocation nearestRefinery() {
         MapLocation robot = rc.getLocation();
+        MapLocation nearRef = null;
         int minD = 100000;
-        if (mined) {
-            for (RobotInfo ri : rc.senseNearbyRobots(-1, rc.getTeam())) {
-                if (((ri.type == RobotType.HQ || ri.type == RobotType.REFINERY))) {
-                    int d = taxicab(ri.location, robot);
-                    if (d < minD) {
-                        goal = ri.location;
-                        minD = d;
-                    }
+        for (RobotInfo ri : rc.senseNearbyRobots(-1, rc.getTeam())) {
+            if (((ri.type == RobotType.HQ || ri.type == RobotType.REFINERY))) {
+                int d = taxicab(ri.location, robot);
+                if (d < minD) {
+                    nearRef = ri.location;
+                    minD = d;
                 }
             }
+        }
+        if(nearRef!=null){
+            refinery = nearRef;
+        }
+        return refinery;
+    }
+
+    void updateGoal() throws GameActionException {
+        MapLocation goal = null;
+        if (mined) {
+            goal = nearestRefinery();
         } else {
             for (MapLocation ml : inSight()) {
                 if (rc.senseSoup(ml) > 0) {
-                    System.out.println("SEE SOUP " + mined);
                     goal = ml;
                     break;
                 }
@@ -95,11 +114,12 @@ public class Miner extends RobotPlayer {
             }
         }
     }
-    void printGoal(){
+
+    void printGoal() {
         if (g == Goal.Refine) {
-            System.out.println("Goal: " + g + ", at: " + refinery + " Robot at "+ rc.getLocation());
+            System.out.println("Goal: " + g + ", at: " + refinery + " Robot at " + rc.getLocation());
         } else if (g == Goal.Mine) {
-            System.out.println("Goal: " + g + ", at: " + soup + " Robot at "+ rc.getLocation());
+            System.out.println("Goal: " + g + ", at: " + soup + " Robot at " + rc.getLocation());
         }
     }
 
@@ -110,8 +130,12 @@ public class Miner extends RobotPlayer {
                 if (tryMine(dir)) {
                     mined = true;
                     Clock.yield();
-                    if (refinery != null && taxicab(refinery, rc.getLocation()) > 7) { //far from refinery...
-                        tryBuild(RobotType.REFINERY, oppositeDirection(dir));
+                    if (refinery != null && taxicab(nearestRefinery(), rc.getLocation()) >= 5) { //far from refinery...
+                        for (Direction d : generalDirectionOf(dir)) {
+                            if (tryBuild(RobotType.REFINERY, d)) {
+                                break;
+                            }
+                        }
                     }
                     g = Goal.None;
                     System.out.println("Done mining soup " + rc.getSoupCarrying());

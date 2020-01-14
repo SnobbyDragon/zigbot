@@ -10,17 +10,31 @@ public strictfp class RobotPlayer {
 
     static Direction[] directions = {
             Direction.NORTH,
-            Direction.EAST,
-            Direction.SOUTH,
-            Direction.WEST,
             Direction.NORTHEAST,
+            Direction.EAST,
             Direction.SOUTHEAST,
+            Direction.SOUTH,
             Direction.SOUTHWEST,
+            Direction.WEST,
             Direction.NORTHWEST,
     };
 
-    int directionNorth(Direction d){
-        switch(d){
+    int indInDirList(Direction d) {
+        for (int i = 0; i < directions.length; i++) {
+            if (directions[i] == d) {
+                return i;
+            }
+        }
+        throw new RuntimeException("Direction Index not found in list");
+    }
+
+    Direction[] generalDirectionOf(Direction d) {
+        int ind = indInDirList(d);
+        return new Direction[]{d, directions[(ind + 1) % 8], directions[(ind - 1) % 8]};
+    }
+
+    int directionNorth(Direction d) {
+        switch (d) {
             case NORTH:
             case NORTHEAST:
             case NORTHWEST:
@@ -29,12 +43,13 @@ public strictfp class RobotPlayer {
             case SOUTHEAST:
             case SOUTHWEST:
                 return -1;
-            default: return 0;
+            default:
+                return 0;
         }
     }
 
-    int directionEast(Direction d){
-        switch(d){
+    int directionEast(Direction d) {
+        switch (d) {
             case EAST:
             case NORTHEAST:
             case SOUTHEAST:
@@ -43,33 +58,30 @@ public strictfp class RobotPlayer {
             case NORTHWEST:
             case SOUTHWEST:
                 return -1;
-            default: return 0;
+            default:
+                return 0;
         }
     }
+
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
 
     static int turnCount;
 
-    public static Direction oppositeDirection(Direction d) throws RuntimeException {
-        for (int i = 0; i < directions.length; i++) {
-            if (directions[i] == d) {
-                return directions[(i + 2) % 4 + 4*(i/4)];
-            }
-        }
-        throw new RuntimeException("No opposite direction found");
+    public Direction oppositeDirection(Direction d) throws RuntimeException {
+        return directions[(4 + indInDirList(d)) % 8];
     }
 
-    public static Set<MapLocation> inSight(){
+    public static Set<MapLocation> inSight() {
         Set<MapLocation> seen = new HashSet<>();
         MapLocation st = rc.getLocation();
         Queue<MapLocation> toVisit = new LinkedList<>();
         toVisit.add(st);
-        for(int i = 0; i < toVisit.size(); i++){
+        for (int i = 0; i < toVisit.size(); i++) {
             MapLocation top = toVisit.poll();
-            for(Direction d : directions){
+            for (Direction d : directions) {
                 MapLocation nxt = top.add(d);
-                if(!seen.contains(nxt) && rc.canSenseLocation(nxt)){
+                if (!seen.contains(nxt) && rc.canSenseLocation(nxt)) {
                     toVisit.add(nxt);
                     seen.add(nxt);
                 }
@@ -199,7 +211,7 @@ public strictfp class RobotPlayer {
         return spawnedByMiner[(int) (Math.random() * spawnedByMiner.length)];
     }
 
-    static boolean tryMove() throws GameActionException {
+    static boolean moveAnywhere() throws GameActionException {
         for (Direction dir : directions)
             if (tryMove(dir))
                 return true;
@@ -226,6 +238,9 @@ public strictfp class RobotPlayer {
         // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
         if (rc.isReady() && rc.canMove(dir)) {
             rc.move(dir);
+            if (rc.getCooldownTurns() >= 1) {
+                Clock.yield();
+            }
             return true;
         } else return false;
     }
@@ -241,6 +256,9 @@ public strictfp class RobotPlayer {
     static boolean tryBuild(RobotType type, Direction dir) throws GameActionException {
         if (rc.isReady() && rc.canBuildRobot(type, dir)) {
             rc.buildRobot(type, dir);
+            if (rc.getCooldownTurns() >= 1) {
+                Clock.yield();
+            }
             return true;
         } else return false;
     }
