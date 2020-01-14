@@ -54,7 +54,7 @@ public strictfp class RobotPlayer {
                 // System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
                 switch (rc.getType()) {
                     case HQ:
-                        runHQ();
+                        HQ.runHQ();
                         break;
                     case MINER:
                         new Miner().runMiner();
@@ -89,16 +89,6 @@ public strictfp class RobotPlayer {
                 System.out.println(rc.getType() + " Exception");
                 e.printStackTrace();
             }
-        }
-    }
-
-    static void runHQ() throws GameActionException {
-        int count = 0;
-        while (true) {
-            for (Direction dir : directions)
-                if (count < 4 && tryBuild(RobotType.MINER, dir)) {
-                    count++;
-                }
         }
     }
 
