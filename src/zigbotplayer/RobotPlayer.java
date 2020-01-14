@@ -2,21 +2,50 @@ package zigbotplayer;
 
 import battlecode.common.*;
 
+import java.util.*;
+
 /* Chris Kimmel was here */
 public strictfp class RobotPlayer {
     static RobotController rc;
 
     static Direction[] directions = {
             Direction.NORTH,
-            Direction.NORTHEAST,
             Direction.EAST,
-            Direction.SOUTHEAST,
             Direction.SOUTH,
-            Direction.SOUTHWEST,
             Direction.WEST,
-            Direction.NORTHWEST
+            Direction.NORTHEAST,
+            Direction.SOUTHEAST,
+            Direction.SOUTHWEST,
+            Direction.NORTHWEST,
     };
 
+    int directionNorth(Direction d){
+        switch(d){
+            case NORTH:
+            case NORTHEAST:
+            case NORTHWEST:
+                return 1;
+            case SOUTH:
+            case SOUTHEAST:
+            case SOUTHWEST:
+                return -1;
+            default: return 0;
+        }
+    }
+
+    int directionEast(Direction d){
+        switch(d){
+            case EAST:
+            case NORTHEAST:
+            case SOUTHEAST:
+                return 1;
+            case WEST:
+            case NORTHWEST:
+            case SOUTHWEST:
+                return -1;
+            default: return 0;
+        }
+    }
     static RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
 
@@ -25,10 +54,28 @@ public strictfp class RobotPlayer {
     public static Direction oppositeDirection(Direction d) throws RuntimeException {
         for (int i = 0; i < directions.length; i++) {
             if (directions[i] == d) {
-                return directions[(i + 4) % directions.length];
+                return directions[(i + 2) % 4 + 4*(i/4)];
             }
         }
         throw new RuntimeException("No opposite direction found");
+    }
+
+    public static Set<MapLocation> inSight(){
+        Set<MapLocation> seen = new HashSet<>();
+        MapLocation st = rc.getLocation();
+        Queue<MapLocation> toVisit = new LinkedList<>();
+        toVisit.add(st);
+        for(int i = 0; i < toVisit.size(); i++){
+            MapLocation top = toVisit.poll();
+            for(Direction d : directions){
+                MapLocation nxt = top.add(d);
+                if(!seen.contains(nxt) && rc.canSenseLocation(nxt)){
+                    toVisit.add(nxt);
+                    seen.add(nxt);
+                }
+            }
+        }
+        return seen;
     }
 
     /**
@@ -54,7 +101,7 @@ public strictfp class RobotPlayer {
                 // System.out.println("I'm a " + rc.getType() + "! Location " + rc.getLocation());
                 switch (rc.getType()) {
                     case HQ:
-                        HQ.runHQ();
+                        new HQ().runHQ();
                         break;
                     case MINER:
                         new Miner().runMiner();
