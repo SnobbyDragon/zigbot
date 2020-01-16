@@ -5,6 +5,8 @@ import battlecode.common.*;
 // Miner class. A miner will set it's goal to be any soup in sight, then
 // once it's mined, set it's goal to be any refinery in sight or the refinery it came from.
 // it will try to move towards it's goal and achieve it.
+// It it can't move in the general direction it wants to go, it will wander in a random direction
+// for a while.
 public class Miner extends RobotPlayer {
     boolean mined = false;
 
@@ -19,16 +21,18 @@ public class Miner extends RobotPlayer {
     MapLocation refinery;
     MapLocation soup;
 
-    void runMiner() throws GameActionException {
+    public void runUnit() throws GameActionException {
         while (true) {
             minerTurn();
-            Clock.yield();
+            endTurn();
         }
     }
 
     boolean generalMove(Direction d) throws GameActionException {
-        for (Direction dir : generalDirectionOf(d)) {
-            if (tryMove(dir)) {
+        Direction[] genDirs = generalDirectionOf(d);
+        int rand = (int) (Math.random() * genDirs.length);
+        for (int i = 0; i < genDirs.length; i++) {
+            if (tryMove(genDirs[(i + rand) % genDirs.length])) {
                 return true;
             }
         }
@@ -86,7 +90,7 @@ public class Miner extends RobotPlayer {
                 }
             }
         }
-        if(nearRef!=null){
+        if (nearRef != null) {
             refinery = nearRef;
         }
         return refinery;
@@ -124,6 +128,14 @@ public class Miner extends RobotPlayer {
     }
 
     void minerTurn() throws GameActionException {
+        if (rc.getTeamSoup() > 300*designSchools) {
+            for (Direction d : directions) {
+                if (tryBuild(RobotType.DESIGN_SCHOOL, d)) {
+                    submitMessage(6, new int[]{5, 0, 0 ,0 ,0 ,0 ,0});
+                    break;
+                }
+            }
+        }
         if (!mined) {
             chooseMove();
             for (Direction dir : directions) {
@@ -154,11 +166,11 @@ public class Miner extends RobotPlayer {
             }
         }
         //reset goals if the location we were supposed to go to is gone
-        /*if (g == Goal.Refine && taxicab(rc.getLocation(), refinery) == 0) {
+        if (g == Goal.Refine && taxicab(rc.getLocation(), refinery) == 0) {
             g = Goal.None;
         } else if (g == Goal.Mine && taxicab(rc.getLocation(), soup) == 0) {
             g = Goal.None;
-        }*/
+        }
     }
 
 
@@ -169,9 +181,12 @@ public class Miner extends RobotPlayer {
      * @return true if a move was performed
      * @throws GameActionException
      */
-    static boolean tryMine(Direction dir) throws GameActionException {
+    boolean tryMine(Direction dir) throws GameActionException {
         if (rc.isReady() && rc.canMineSoup(dir)) {
             rc.mineSoup(dir);
+            if (rc.getCooldownTurns() >= 1) {
+                Clock.yield();
+            }
             return true;
         } else return false;
     }
@@ -183,9 +198,12 @@ public class Miner extends RobotPlayer {
      * @return true if a move was performed
      * @throws GameActionException
      */
-    static boolean tryRefine(Direction dir) throws GameActionException {
+    boolean tryRefine(Direction dir) throws GameActionException {
         if (rc.isReady() && rc.canDepositSoup(dir)) {
             rc.depositSoup(dir, rc.getSoupCarrying());
+            if (rc.getCooldownTurns() >= 1) {
+                Clock.yield();
+            }
             return true;
         } else return false;
     }

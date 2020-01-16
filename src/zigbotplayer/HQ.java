@@ -1,28 +1,27 @@
 package zigbotplayer;
 
 import battlecode.common.*;
-import battlecode.server.GameInfo;
-import battlecode.world.GameStats;
 
-import java.util.Queue;
+import java.util.Arrays;
 
 public class HQ extends RobotPlayer {
     int built = 0;
 
     void HQTurn() throws GameActionException {
-        if(built < 12) {//build 12 then build other things?
+        if (built < rc.getTeamSoup() / 30) {// build mines when there is soup excess
             for (Direction dir : directions) {
-                if(tryBuild(RobotType.MINER, dir)){
+                if (tryBuild(RobotType.MINER, dir)) {
                     built++;
                 }
             }
         }
     }
 
-    void runHQ() throws GameActionException {
+    public void runUnit() throws GameActionException {
         while (true) {
             HQTurn();
-            Clock.yield();
+            endTurn();
+            System.out.println(Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
         }
     }
 
