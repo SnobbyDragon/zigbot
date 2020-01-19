@@ -1,5 +1,7 @@
 package zigbotplayer;
 
+import java.util.Set;
+
 import battlecode.common.*;
 
 // Miner class. A miner will set it's goal to be any soup in sight, then
@@ -10,13 +12,27 @@ import battlecode.common.*;
 public class Miner extends RobotPlayer {
     boolean mined = false;
 
+    /**
+     * Goals of the miner
+     * None = no goal
+     * Refine = refine the soup it has
+     * Mine = go mine soup
+     * Explore = go find soup
+     */
     enum Goal {None, Refine, Mine, Explore};
 
     Goal g = Goal.None;
-    Direction exploreDir = randomDirection();
+    Direction exploreDir = this.pickExploreDirection();
     int exploreRounds = 0;
 
+    /**
+     * Location of the refinery to deliver soup.
+     */
     MapLocation refinery;
+    
+    /**
+     * Location of the soup to mine.
+     */
     MapLocation soup;
 
     public void runUnit() throws GameActionException {
@@ -44,7 +60,10 @@ public class Miner extends RobotPlayer {
         return false;
     }
 
-    
+    /**
+     * Moves in a direction depending on goal.
+     * @throws GameActionException
+     */
     void chooseMove() throws GameActionException {
         printGoal();
         if (g == Goal.None || (g == Goal.Explore && exploreRounds <= 0)) {
@@ -72,20 +91,25 @@ public class Miner extends RobotPlayer {
                 }
             }
             // failed to move
-            exploreDir = randomDirection();
+            exploreDir = this.pickExploreDirection();
             g = Goal.Explore;
             exploreRounds = (int) (Math.random() * 10);
             System.out.println("EXPLORE FOR  " + exploreRounds);
         }
     }
 
+    /**
+     * Finds the nearest refinery
+     * @return the location of the nearest refinery
+     */
     MapLocation nearestRefinery() {
         MapLocation robot = rc.getLocation();
         MapLocation nearRef = null;
         int minD = 100000;
         for (RobotInfo ri : rc.senseNearbyRobots(-1, rc.getTeam())) {
             if (((ri.type == RobotType.HQ || ri.type == RobotType.REFINERY))) {
-                int d = taxicab(ri.location, robot);
+//                int d = taxicab(ri.location, robot);
+            	int d = box(ri.location, robot);
                 if (d < minD) {
                     nearRef = ri.location;
                     minD = d;
@@ -98,6 +122,10 @@ public class Miner extends RobotPlayer {
         return refinery;
     }
 
+    /**
+     * 
+     * @throws GameActionException
+     */
     void updateGoal() throws GameActionException {
         MapLocation goal = null;
         if (mined) {
@@ -176,12 +204,32 @@ public class Miner extends RobotPlayer {
     }
     
     /**
-     * Chooses a direction to explore based on map edges, team locations
+     * Chooses a direction to explore based on map edges, water, elevation, nearby units
      * @return a direction to explore
      */
     Direction pickExploreDirection() {
-    	Direction d = this.randomDirection();
-    	return d;
+    	String dir = "";
+    	MapLocation current = rc.getLocation();
+    	int sightRadiusSquared = rc.getCurrentSensorRadiusSquared();
+    	
+    	//first check if near edge of map, we don't want to move towards the edge when there's already nothing there
+    	if ((MAP_HEIGHT - current.y)*(MAP_HEIGHT - current.y) < sightRadiusSquared) { //can see the north edge of the map, must move south
+    		
+    	} else if (current.y < sightRadiusSquared) { //can see the south edge of the map, must move north
+    		
+    	}
+    	if (MAP_WIDTH - current.x < sightRadiusSquared) { //can see the east edge of the map, must move west
+    		dir += "WEST";
+    	} else if (current.x < sightRadiusSquared) { //can see the west edge of the map, must move east
+    		dir += "EAST";
+    	}
+    	if (!dir.equals("")) { 
+    		return Direction.valueOf(dir);
+    	}
+    	//not near the edge of the map, so check for nearby robots
+    	
+    	//not near edge of map, no nearby robots
+    	return this.randomDirection();
     }
 
 

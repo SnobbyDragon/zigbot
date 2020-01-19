@@ -9,8 +9,21 @@ public strictfp class RobotPlayer {
     static RobotController rc;
 
     static int TEAM_HASH;
+    static int MAP_HEIGHT, MAP_WIDTH;
+    
+    /**
+     * The turn number.
+     */
+    int turnCount;
 
+    /**
+     * 
+     */
     int designSchools = 0;
+    
+    /**
+     * 
+     */
     int messageReadFrom = 1;
 
     /**
@@ -26,6 +39,12 @@ public strictfp class RobotPlayer {
             Direction.WEST,
             Direction.NORTHWEST,
     };
+    
+    /**
+     * An array of units that can be created by a miner
+     */
+    RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
+            RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
 
     /**
      * Returns whether the given direction is not CENTER
@@ -147,11 +166,6 @@ public strictfp class RobotPlayer {
     	return Math.max(a.x - b.x, a.y - b.y);
     }
 
-    RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
-            RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
-
-    int turnCount;
-
     /**
      * Returns the opposite direction of the given direction
      * @param d
@@ -163,7 +177,10 @@ public strictfp class RobotPlayer {
         return directions[(4 + indInDirList(d)) % 8];
     }
 
-    
+    /**
+     * Gets all locations that are in sight of this robot.
+     * @return a set of locations that can be seen
+     */
     public Set<MapLocation> inSight() {
         Set<MapLocation> seen = new HashSet<>();
         MapLocation st = rc.getLocation();
@@ -192,6 +209,8 @@ public strictfp class RobotPlayer {
         // and to get information on its current status.
         RobotPlayer me = new RobotPlayer();
         RobotPlayer.rc = rc;
+        MAP_WIDTH = rc.getMapWidth();
+        MAP_HEIGHT = rc.getMapHeight();
         TEAM_HASH = 387428419 + (rc.getTeam() == Team.A ? 0 : 1);
         System.out.println("I'm a " + rc.getType() + " and I just got created!");
         // Try/catch blocks stop unhandled exceptions, which cause your robot to explode
@@ -200,11 +219,9 @@ public strictfp class RobotPlayer {
                 switch (rc.getType()) {
                     case HQ:
                         me = new HQ();
-                        me.runUnit();
                         break;
                     case MINER:
                         me = new Miner();
-                        me.runUnit();
                         break;
                     case REFINERY:
                         me.runRefinery();
@@ -228,6 +245,7 @@ public strictfp class RobotPlayer {
                         me.runNetGun();
                         break;
                 }
+                me.runUnit();
             } catch (Exception e) {
                 System.out.println(rc.getType() + " Exception");
                 e.printStackTrace();
