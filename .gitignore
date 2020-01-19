@@ -32,3 +32,4 @@ gradle.properties
 .project
 .settings/
 gradlew.bat
+gradle.properties
