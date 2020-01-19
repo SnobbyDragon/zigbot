@@ -10,9 +10,7 @@ import battlecode.common.*;
 public class Miner extends RobotPlayer {
     boolean mined = false;
 
-    enum Goal {None, Refine, Mine, Explore}
-
-    ;
+    enum Goal {None, Refine, Mine, Explore};
 
     Goal g = Goal.None;
     Direction exploreDir = randomDirection();
@@ -28,6 +26,13 @@ public class Miner extends RobotPlayer {
         }
     }
 
+    /**
+     * Tries to move in the given general direction
+     * @param d
+     * 		the given direction
+     * @return whether the miner can move towards the given direction
+     * @throws GameActionException
+     */
     boolean generalMove(Direction d) throws GameActionException {
         Direction[] genDirs = generalDirectionOf(d);
         int rand = (int) (Math.random() * genDirs.length);
@@ -39,6 +44,7 @@ public class Miner extends RobotPlayer {
         return false;
     }
 
+    
     void chooseMove() throws GameActionException {
         printGoal();
         if (g == Goal.None || (g == Goal.Explore && exploreRounds <= 0)) {
@@ -71,10 +77,6 @@ public class Miner extends RobotPlayer {
             exploreRounds = (int) (Math.random() * 10);
             System.out.println("EXPLORE FOR  " + exploreRounds);
         }
-    }
-
-    int taxicab(MapLocation a, MapLocation b) {
-        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
 
     MapLocation nearestRefinery() {
@@ -171,6 +173,15 @@ public class Miner extends RobotPlayer {
         } else if (g == Goal.Mine && taxicab(rc.getLocation(), soup) == 0) {
             g = Goal.None;
         }
+    }
+    
+    /**
+     * Chooses a direction to explore based on map edges, team locations
+     * @return a direction to explore
+     */
+    Direction pickExploreDirection() {
+    	Direction d = this.randomDirection();
+    	return d;
     }
 
 

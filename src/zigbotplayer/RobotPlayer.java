@@ -13,6 +13,9 @@ public strictfp class RobotPlayer {
     int designSchools = 0;
     int messageReadFrom = 1;
 
+    /**
+     * An array of all directions excluding CENTER
+     */
     Direction[] directions = {
             Direction.NORTH,
             Direction.NORTHEAST,
@@ -24,6 +27,12 @@ public strictfp class RobotPlayer {
             Direction.NORTHWEST,
     };
 
+    /**
+     * Returns whether the given direction is not CENTER
+     * @param d
+     * 		the given direction
+     * @return whether the given direction is not CENTER
+     */
     int indInDirList(Direction d) {
         for (int i = 0; i < directions.length; i++) {
             if (directions[i] == d) {
@@ -33,11 +42,23 @@ public strictfp class RobotPlayer {
         throw new RuntimeException("Direction Index not found in list");
     }
 
+    /**
+     * Returns directions adjacent to the given direction
+     * @param d
+     * 		the given direction
+     * @return an array of 3 directions
+     */
     Direction[] generalDirectionOf(Direction d) {
         int ind = indInDirList(d);
         return new Direction[]{d, directions[(ind + 1) % 8], directions[(ind + 7) % 8]};
     }
 
+    /**
+     * returns whether the direction points north
+     * @param d
+     * 		the given direction
+     * @return 1 if north, -1 if south, 0 otherwise
+     */
     int directionNorth(Direction d) {
         switch (d) {
             case NORTH:
@@ -53,6 +74,12 @@ public strictfp class RobotPlayer {
         }
     }
 
+    /**
+     * returns whether the direction points east
+     * @param d
+     * 		the given direction
+     * @return 1 if east, -1 if west, 0 otherwise
+     */
     int directionEast(Direction d) {
         switch (d) {
             case EAST:
@@ -67,16 +94,76 @@ public strictfp class RobotPlayer {
                 return 0;
         }
     }
+    
+    /**
+     * Finds the direction from a location to another
+     * @param a
+     * 		a location on the map
+     * @param b
+     * 		another location on the map
+     * @return the direction from a to b
+     */
+    Direction directionToLoc(MapLocation a, MapLocation b) {
+    	int dx = a.x - b.x;
+    	int dy = a.y - b.y;
+    	String dir = "";
+    	if (dy < 0) { //a is to the south of b
+    		dir += "SOUTH";
+    	} else if (dy > 0) { //a is to the north of b
+    		dir += "NORTH";
+    	}
+    	if (dx < 0) { //a is to the west of b
+    		dir += "WEST";
+    	} else if (dx > 0) { //a is to the east of b
+    		dir += "EAST";
+    	}
+    	if (dir.equals("")) { //a and b are the same
+    		dir = "CENTER";
+    	}
+    	return Direction.valueOf(dir);
+    }
+    
+    /**
+     * Taxicab distance between two locations
+     * @param a
+     * 		a location on the map
+     * @param b
+     * 		another location on the map
+     * @return the taxicab distance between a and b
+     */
+    int taxicab(MapLocation a, MapLocation b) {
+        return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
+    }
+    
+    /**
+     * Box distance to find the minimum moves between two locations (since we can move diagonally. disregards obstacles)
+     * @param a 
+     * 		a location on the map
+     * @param b
+     * 		another location on the map
+     * @return the minimum moves between a and b
+     */
+    int box(MapLocation a, MapLocation b) {
+    	return Math.max(a.x - b.x, a.y - b.y);
+    }
 
     RobotType[] spawnedByMiner = {RobotType.REFINERY, RobotType.VAPORATOR, RobotType.DESIGN_SCHOOL,
             RobotType.FULFILLMENT_CENTER, RobotType.NET_GUN};
 
     int turnCount;
 
+    /**
+     * Returns the opposite direction of the given direction
+     * @param d
+     * 		the given direction
+     * @return the opposite direction
+     * @throws RuntimeException
+     */
     public Direction oppositeDirection(Direction d) throws RuntimeException {
         return directions[(4 + indInDirList(d)) % 8];
     }
 
+    
     public Set<MapLocation> inSight() {
         Set<MapLocation> seen = new HashSet<>();
         MapLocation st = rc.getLocation();
