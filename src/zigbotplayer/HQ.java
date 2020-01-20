@@ -1,27 +1,22 @@
 package zigbotplayer;
 
 import battlecode.common.*;
+import javafx.util.Builder;
 
 import java.util.Arrays;
 
 public class HQ extends RobotPlayer {
-    int built = 0;
 
     void HQTurn() throws GameActionException {
-        for (Direction dir : directions) {
-            if (built < rc.getTeamSoup() / 50) {// build mines when there is soup excess
-                if (tryBuild(RobotType.MINER, dir)) {
-                    built++;
-                }
-            }
-        }
+        BuildUnits.considerBuild(this, RobotType.MINER);
     }
 
     public void runUnit() throws GameActionException {
         while (true) {
             HQTurn();
             endTurn();
-            System.out.println(Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
+            // This line prints the contents of the most recent block on the blockchain
+            System.out.println("Last block = " + Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
         }
     }
 

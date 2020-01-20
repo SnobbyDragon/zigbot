@@ -30,7 +30,6 @@ public class DeliveryDrone extends RobotPlayer {
         while (true) {
             droneTurn();
             endTurn();
-            System.out.println(Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
         }
     }
 }
