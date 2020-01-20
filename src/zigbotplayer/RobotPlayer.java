@@ -336,13 +336,10 @@ public strictfp class RobotPlayer {
      * Read messages to update map info... does nothing rn.
      */
     void updateFromMessages() throws GameActionException {
-        for (; messageReadFrom < rc.getRoundNum(); messageReadFrom++) {
-            for (Transaction t : rc.getBlock(messageReadFrom)) {
-                if (t.getMessage()[0] == TEAM_HASH) {
-                    if(t.getMessage()[1]==1){//landscaper built
-                        designSchools++;
-                    }
-                }
+        List<Transaction> recentMessages = blockChainHandler.getMessages(messageReadFrom, rc.getRoundNum()-1);
+        for (Transaction t : recentMessages) {
+            if(t.getMessage()[1]==1){//landscaper built
+                designSchools++;
             }
         }
     }

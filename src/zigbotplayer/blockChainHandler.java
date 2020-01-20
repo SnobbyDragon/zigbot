@@ -5,7 +5,6 @@ import battlecode.common.Team;
 import battlecode.common.Transaction;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.zip.CRC32;
 
@@ -47,7 +46,7 @@ public class blockChainHandler {
         return code[6] == checkSum(code);
     }
 
-    public boolean submitMessage(RobotPlayer.Message m) throws GameActionException {
+    public static boolean submitMessage(RobotPlayer.Message m) throws GameActionException {
         int[] message = new int[7];
         System.arraycopy(m.msg, 0, message, 0, 6);
         signThis(message);
@@ -58,19 +57,18 @@ public class blockChainHandler {
         return false;
     }
 
-    public List<int[]> getMostRecentMessages() throws GameActionException{
-        List<int[]> result = new ArrayList<>();
-        for(int i=rc.getRoundNum()-1; i>=1; i--) {
+    public static List<Transaction> getMessages(int startRound, int endRound) throws GameActionException{
+        List<Transaction> result = new ArrayList<>();
+        for(int i=startRound; i<=endRound; i++) {
             Transaction[] transactions = rc.getBlock(i);
-            for(Transaction t : transactions){
-                if (isValid(t.getMessage())){
-                    result.add(t.getMessage());
+            for (Transaction t : transactions) {
+                if (isValid(t.getMessage())) {
+                    result.add(t);
                 }
-            }
-            if(!result.isEmpty()){
-                return result;
             }
         }
         return result;
     }
+
+    //TODO: interpret meanings of messages here.
 }
