@@ -26,6 +26,7 @@ src/lectureplayer
 battlecode-scaffold.iws
 build.gradle
 gradle.properties
+./ChrisRunClient*
 
 # Eclipse user-specific files
 .classpath

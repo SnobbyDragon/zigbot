@@ -227,6 +227,7 @@ public strictfp class RobotPlayer {
                         me = new Miner();
                         break;
                     case REFINERY:
+                    	me = new Refinery();
                         break;
                     case VAPORATOR:
                         break;
