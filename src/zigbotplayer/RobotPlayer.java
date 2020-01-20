@@ -6,7 +6,7 @@ import java.util.*;
 
 /* Chris Kimmel was here */
 public strictfp class RobotPlayer {
-    static RobotController rc;
+    public static RobotController rc;
 
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;

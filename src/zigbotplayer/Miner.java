@@ -36,6 +36,7 @@ public class Miner extends RobotPlayer {
     MapLocation soup;
 
     public void runUnit() throws GameActionException {
+        refinery = nearestRefinery();
         while (true) {
             minerTurn();
             endTurn();
@@ -128,8 +129,10 @@ public class Miner extends RobotPlayer {
      */
     void updateGoal() throws GameActionException {
         MapLocation goal = null;
+        System.out.println("Updating goal...");
         if (mined) {
             goal = nearestRefinery();
+            System.out.println("Set goal to " + goal);
         } else {
             for (MapLocation ml : inSight()) {
                 if (rc.senseSoup(ml) > 0) {
@@ -158,21 +161,10 @@ public class Miner extends RobotPlayer {
     }
 
     void minerTurn() throws GameActionException {
-        for (Direction d : directions) {
-            if (rc.getTeamSoup() > 700 * designSchools) {
-                if (tryBuild(RobotType.DESIGN_SCHOOL, d)) {
-                    submitMessage(3, new int[]{1, 0, 0, 0, 0, 0});
-                    break;
-                }
-            }
-        }
-        //if far from refinery, and near soup, then build a refinery.
-        if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 6 && box(soup,rc.getLocation())<2) {
-            for (Direction d : directions) {
-                if (tryBuild(RobotType.REFINERY, d)) {
-                    break;
-                }
-            }
+        System.out.println("NEW TURN");
+        BuildUnits.considerBuild(this, RobotType.DESIGN_SCHOOL);
+        if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 6 && box(soup, rc.getLocation()) < 2) {
+            BuildUnits.considerBuild(this, RobotType.REFINERY);
         }
         if (!mined) {
             chooseMove();
