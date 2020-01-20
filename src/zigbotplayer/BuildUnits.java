@@ -5,9 +5,6 @@ import battlecode.common.GameActionException;
 import battlecode.common.RobotType;
 import battlecode.common.MapLocation;
 
-import java.awt.*;
-import java.util.Map;
-
 import static zigbotplayer.RobotPlayer.rc;
 
 /*
@@ -27,13 +24,20 @@ public final class BuildUnits {
                     return null; // there is not a lot of soup and a lot of schools already
                 }
                 break;
-            case REFINERY:
+            case MINER:
+                if (soup < builder.miners * 50) {// build miners when there is soup excess
+                    return null;
+                }
                 break;
             case LANDSCAPER:
                 if (soup < builder.landscapers * 200) {
                     return null;
                 }
                 break;
+            case DELIVERY_DRONE:
+                if(soup < builder.drones * 300){
+                    return null;
+                }
             default:
                 break;
         }
@@ -55,6 +59,12 @@ public final class BuildUnits {
                         break;
                     case LANDSCAPER:
                         builder.landscapers++;
+                        break;
+                    case MINER:
+                        builder.miners++;
+                        break;
+                    case DELIVERY_DRONE:
+                        builder.drones++;
                         break;
                 }
                 builder.endTurn();

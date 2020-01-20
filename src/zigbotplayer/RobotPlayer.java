@@ -19,6 +19,7 @@ public strictfp class RobotPlayer {
     /**
      * The number of various types of robots built.
      */
+    int miners = 0;
     int designSchools = 0;
     int drones = 0;
     int landscapers = 0;
