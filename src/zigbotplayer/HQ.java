@@ -21,7 +21,9 @@ public class HQ extends RobotPlayer {
         while (true) {
             HQTurn();
             endTurn();
-            System.out.println(Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
+            
+            // This line prints the contents of the most recent block on the blockchain
+            System.out.println("Last block = " + Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
         }
     }
 

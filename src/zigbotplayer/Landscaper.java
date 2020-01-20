@@ -11,13 +11,14 @@ public class Landscaper extends RobotPlayer {
 
     public void landScaperTurn() throws GameActionException {
         moveAnywhere();
+        
+        // System.out.println("I'M A LANDSCAPER AND I EXIST!");
     }
 
     public void runUnit() throws GameActionException {
         while (true) {
             landScaperTurn();
             endTurn();
-            System.out.println(Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
         }
     }
 }

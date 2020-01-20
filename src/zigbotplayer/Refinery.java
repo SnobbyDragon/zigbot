@@ -19,7 +19,6 @@ public class Refinery extends RobotPlayer {
         while (true) {
             RefineryTurn();
             endTurn();
-            System.out.println(Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
         }
     }
 
