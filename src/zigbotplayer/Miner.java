@@ -94,7 +94,7 @@ public class Miner extends RobotPlayer {
             // failed to move
             exploreDir = this.pickExploreDirection();
             g = Goal.Explore;
-            exploreRounds = 1 + (int) (Math.random() * 3);
+            exploreRounds = 1 + (int) (Math.random() * 4);
             System.out.println("EXPLORE FOR  " + exploreRounds);
         }
     }
@@ -166,20 +166,20 @@ public class Miner extends RobotPlayer {
                 }
             }
         }
+        //if far from refinery, and near soup, then build a refinery.
+        if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 6 && box(soup,rc.getLocation())<2) {
+            for (Direction d : directions) {
+                if (tryBuild(RobotType.REFINERY, d)) {
+                    break;
+                }
+            }
+        }
         if (!mined) {
             chooseMove();
             for (Direction dir : directions) {
                 if (tryMine(dir)) {
                     mined = true;
                     Clock.yield();
-                    //if far from refinery, and just mined, then build a refinery.
-                    if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 5) {
-                        for (Direction d : generalDirectionOf(dir)) {
-                            if (tryBuild(RobotType.REFINERY, d)) {
-                                break;
-                            }
-                        }
-                    }
                     g = Goal.None;
                     System.out.println("Done mining soup " + rc.getSoupCarrying());
                     return;

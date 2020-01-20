@@ -11,7 +11,7 @@ public strictfp class RobotPlayer {
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;
 
-    /**
+    /*
      * The turn number.
      */
     int turnCount;
