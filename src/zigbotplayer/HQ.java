@@ -8,10 +8,11 @@ public class HQ extends RobotPlayer {
 
     void HQTurn() throws GameActionException {
         BuildUnits.considerBuild(this, RobotType.MINER);
+        // todo: shoot lazorz
     }
 
     public void runUnit() throws GameActionException {
-        submitMessage(11, new int[]{2, rc.getLocation().x, rc.getLocation().y,0,0,0});
+        submitMessage(11, new int[]{2, rc.getLocation().x, rc.getLocation().y, 0, 0, 0});
         while (true) {
             HQTurn();
             endTurn();

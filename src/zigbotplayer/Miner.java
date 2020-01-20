@@ -145,7 +145,6 @@ public class Miner extends RobotPlayer {
     }
 
     void minerTurn() throws GameActionException {
-        System.out.println("NEW TURN");
         BuildUnits.considerBuild(this, RobotType.DESIGN_SCHOOL);
         if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 6 && box(soup, rc.getLocation()) < 2) {
             BuildUnits.considerBuild(this, RobotType.REFINERY);
@@ -154,14 +153,12 @@ public class Miner extends RobotPlayer {
         if (!mined) {
             for (Direction dir : Movement.directions) {
                 while (tryMine(dir)) {
-                    System.out.println("Done mining soup " + rc.getSoupCarrying());
                     return;
                 }
             }
         } else {
             for (Direction dir : Movement.directions) {
                 if (tryRefine(dir)) {
-                    System.out.println("Refined soup");
                     return;
                 }
             }

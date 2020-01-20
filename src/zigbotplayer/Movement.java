@@ -14,6 +14,8 @@ import static zigbotplayer.RobotPlayer.MAP_WIDTH;
  * m = new Movement(this, destination);
  *
  * Then to move towards your destination call m.step();
+ * It is recommended to use just one movement object and call step on it repeatedly.
+ * As implemented now it doesn't matter.
  */
 public class Movement {
     // the robot that wants to go
@@ -48,7 +50,7 @@ public class Movement {
         if(destination==null){
             return randomMove();
         }
-        Direction dir = Movement.directionToLoc(RobotPlayer.rc.getLocation(), destination);
+        Direction dir = rc.getLocation().directionTo(destination);
         if(dir == Direction.CENTER){
             return StepResult.DONE;
         }
@@ -122,27 +124,6 @@ public class Movement {
      * @param b another location on the map
      * @return the direction from a to b
      */
-    // Is this method a duplicate of MapLocation.directionTo() from the java docs? -Chris
-    private static Direction directionToLoc(MapLocation a, MapLocation b) {
-        int dx = a.x - b.x;
-        int dy = a.y - b.y;
-        String dir = "";
-        if (dy < 0) { //a is to the south of b
-            dir += "NORTH";
-        } else if (dy > 0) { //a is to the north of b
-            dir += "SOUTH";
-        }
-        if (dx < 0) { //a is to the west of b
-            dir += "EAST";
-        } else if (dx > 0) { //a is to the east of b
-            dir += "WEST";
-        }
-        if (dir.equals("")) { //a and b are the same
-            dir = "CENTER";
-        }
-        return Direction.valueOf(dir);
-    }
-
 
     /**
      * Attempts to move in a given direction. Fails if it is impossible or would lead to walking into water.

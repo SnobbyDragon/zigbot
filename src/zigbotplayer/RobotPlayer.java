@@ -11,7 +11,6 @@ public strictfp class RobotPlayer {
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;
 
-    // still not implemented...
     static MapLocation HQLocation;
     /*
      * The turn number.
@@ -150,15 +149,20 @@ public strictfp class RobotPlayer {
             for (Transaction t : rc.getBlock(messageReadFrom)) {//recentMessages) {
                 int[] msg = t.getMessage();
                 if(msg[0] == TEAM_HASH) {
+                    System.out.println("THE MESSAGE WAS READ: " + Arrays.toString(msg));
                     if (msg[1] == 1) {//landscaper built
                         designSchools++;
                     } else if (msg[1] == 2) {
                         HQLocation = new MapLocation(msg[2], msg[3]);
+                        if(this instanceof Landscaper){
+                            ((Landscaper)(this)).updateHQLoc();
+                        }
                     }
                 }
             }
         }
     }
+
 
     static class Message implements Comparable<Message> {
         int price;
@@ -168,6 +172,14 @@ public strictfp class RobotPlayer {
             price = pr;
             msg = ms;
             assert ms.length == 6;
+        }
+
+        @Override
+        public String toString() {
+            return "Message{" +
+                    "price=" + price +
+                    ", msg=" + Arrays.toString(msg) +
+                    '}';
         }
 
         @Override
@@ -183,7 +195,7 @@ public strictfp class RobotPlayer {
         updateFromMessages();
         if (!messageQueue.isEmpty()) {
             if (submitMessage(messageQueue.peek())) {
-                messageQueue.poll();
+                System.out.println("THE MESSAGE WAS SUBMITTED: " + messageQueue.poll());
             }
         }
     }
