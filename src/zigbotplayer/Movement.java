@@ -122,6 +122,7 @@ public class Movement {
      * @param b another location on the map
      * @return the direction from a to b
      */
+    // Is this method a duplicate of MapLocation.directionTo() from the java docs? -Chris
     private static Direction directionToLoc(MapLocation a, MapLocation b) {
         int dx = a.x - b.x;
         int dy = a.y - b.y;

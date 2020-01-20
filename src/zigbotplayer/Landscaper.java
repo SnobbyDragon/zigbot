@@ -4,12 +4,35 @@ import battlecode.common.Direction;
 import battlecode.common.GameActionException;
 import battlecode.common.GameConstants;
 import battlecode.common.RobotInfo;
+import battlecode.common.RobotType;
 import battlecode.common.Team;
 import battlecode.common.MapLocation;
 
 import java.util.Arrays;
 
 public class Landscaper extends RobotPlayer {
+	
+	Goal currentGoal = Goal.None; // initialization
+	
+	// goalLocation and goalElevation are part of a system that I'm phasing out; use digSite and depositSite instead
+	MapLocation goalLocation = new MapLocation(38,28); // Choice of (38,28) is completely arbitrary
+	int goalElevation = 75; // Choice of 75 is completely arbirary
+	
+	// These coordinates are completely arbitrary
+	// Ultimately, we will select these coordinates intelligently so our robot builds a wall
+	MapLocation depositSite = new MapLocation(26,35);
+	MapLocation digSite = new MapLocation(35,37);
+
+	/*
+	 * The current goal of this unit
+	 * 
+	 * None = no goal
+	 * Refill = go somewhere and dig more dirt
+	 * Deposit = go somewhere and deposit dirt
+	 */
+	enum Goal {None, Refill, Deposit};
+	
+	
 	/**
 	 * Execute a landscaper turn.
 	 * 
@@ -19,49 +42,61 @@ public class Landscaper extends RobotPlayer {
 	 * @throws GameActionException
 	 */
     public void landscaperTurn() throws GameActionException {
-    	// STEP ONE: Decide what the goal should be (raising a particular tile to a particular elevation)
-    	
-    	MapLocation goalLocation = new MapLocation(38,28); // Choice of (38,28) is completely arbitrary
-    	int goalElevation = 75; // Choice of 75 is completely arbirary
-    	
-    	// STEP TWO: Try to realize the goal of raising a particular tile to a particular elevation
-    	
-    	// Determine whether goalLocation is close enough to deposit dirt on
-    	boolean goalAdjacent = rc.getLocation().isAdjacentTo(goalLocation);
-		Direction dirToGoal = rc.getLocation().directionTo(goalLocation);
-    	
-    	if (goalAdjacent) { // Determine whether goalLocation is at the appropriate elevation yet
-    		int elevationRightNow = rc.senseElevation(goalLocation);
-    		
-    		if (goalElevation == elevationRightNow) {
-        		// If it's at the right elevation, hooray! Goal achieved.
-    		} else if (elevationRightNow < goalElevation) { 
-    			// If it's too low, try to add dirt
-    			tryDepositDirt(dirToGoal);
-    		} else if (elevationRightNow > goalElevation) {
-    			// If it's too high, dig dirt from it
-    			tryDigDirt(dirToGoal);
-    		}
-    		
-    	} else if (!goalAdjacent) { // Move toward the goalLocation
-    		// THIS COULD BE IMPROVED BY USING A SMARTER MOVEMENT STRATEGY
-    		// TODO
-			// tryMove(dirToGoal);
+    	// STEP ONE: Decide what the goal should be
+    	if (rc.getDirtCarrying() == RobotType.LANDSCAPER.dirtLimit) { // if full
+    		currentGoal = Goal.Deposit;
+    		System.out.println("I switched to deposit mode");
+    	} else if (rc.getDirtCarrying() == 0) { // if empty
+    		currentGoal = Goal.Refill;
+    		System.out.println("I switched to refill mode");
     	}
     	
-    	// Dig dirt, if possible, from an arbitrary direction
-    	for (Direction dir : Movement.directions) {
-			if (rc.isReady() && rc.canDigDirt(dir)) {
-				System.out.println("Trying to dig in direction " + dir);
-				rc.digDirt(dir);
-			}
-		}
-        	
-        // Deposit dirt, if possible, in the SOUTH direction
-        if (rc.isReady() && rc.canDepositDirt(Direction.SOUTH)) {
-        	System.out.println("Trying to deposit dirt south");
-        	rc.depositDirt(Direction.SOUTH);
-        }
+    	// STEP TWO: Follow code specific for that goal    	
+    	if (currentGoal == Goal.None) {
+    		System.out.println("I am an idle landscaper");
+    	} else if (currentGoal == Goal.Refill) {
+    		executeRefillMode();
+    	} else if (currentGoal == Goal.Deposit) {
+    		executeDepositMode();
+    	}
+    }
+    
+    /*
+     * Try to fill the robot up with dirt from location digSite
+     */
+    boolean executeRefillMode() throws GameActionException {
+
+    	if (rc.getLocation().isAdjacentTo(digSite)) { // If adjacent to digSite, dig from it!
+    		// TODO
+    		tryDigDirt(rc.getLocation().directionTo(digSite));
+    		return true;
+    	} else if (!rc.getLocation().isAdjacentTo(digSite)) { // If not adjacent to digSite, move toward it
+    		Movement movement = new Movement(this, digSite); // set the destination to move toward
+    		movement.step();
+        	System.out.println("I am a landscaper and I just tried to take a step");
+    		return true;
+    	} else {
+    		return false;
+    	}
+    	
+    }
+    
+    /*
+     * Try to dump all my dirt on location depositSite
+     */
+    boolean executeDepositMode() throws GameActionException {
+    	System.out.println("I am executing deposit mode");
+    	if (rc.getLocation().isAdjacentTo(depositSite)) { // If adjacent to digSite, dig from it!
+    		// TODO
+    		tryDepositDirt(rc.getLocation().directionTo(depositSite));
+    		return true;
+    	} else if (!rc.getLocation().isAdjacentTo(depositSite)) { // If not adjacent to digSite, move toward it
+    		Movement movement = new Movement(this, digSite); // set the destination to move in
+    		movement.step();
+    		return true;
+    	} else {
+    		return false;
+    	}
     }
 
     public void runUnit() throws GameActionException {
