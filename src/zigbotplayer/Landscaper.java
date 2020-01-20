@@ -59,6 +59,7 @@ public class Landscaper extends RobotPlayer {
     	} else if (currentGoal == Goal.Deposit) {
     		executeDepositMode();
     	}
+    	System.out.println("I reached the end of the landscaperTurn subroutine");
     }
     
     /*
@@ -91,8 +92,10 @@ public class Landscaper extends RobotPlayer {
     		tryDepositDirt(rc.getLocation().directionTo(depositSite));
     		return true;
     	} else if (!rc.getLocation().isAdjacentTo(depositSite)) { // If not adjacent to digSite, move toward it
-    		Movement movement = new Movement(this, digSite); // set the destination to move in
+    		Movement movement = new Movement(this, depositSite); // set the destination to move in
+    		System.out.println("I am entering the movement.step() subrouting");
     		movement.step();
+    		System.out.println("I am out of with the movement.step() subroutine");
     		return true;
     	} else {
     		return false;
