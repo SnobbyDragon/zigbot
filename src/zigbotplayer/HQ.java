@@ -9,7 +9,7 @@ public class HQ extends RobotPlayer {
 
     void HQTurn() throws GameActionException {
         for (Direction dir : directions) {
-            if (built < rc.getTeamSoup() / 30) {// build mines when there is soup excess
+            if (built < rc.getTeamSoup() / 50) {// build mines when there is soup excess
                 if (tryBuild(RobotType.MINER, dir)) {
                     built++;
                 }

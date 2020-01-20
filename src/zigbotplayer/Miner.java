@@ -1,7 +1,5 @@
 package zigbotplayer;
 
-import java.util.Set;
-
 import battlecode.common.*;
 
 // Miner class. A miner will set it's goal to be any soup in sight, then
@@ -112,7 +110,6 @@ public class Miner extends RobotPlayer {
         int minD = 100000;
         for (RobotInfo ri : rc.senseNearbyRobots(-1, rc.getTeam())) {
             if (((ri.type == RobotType.HQ || ri.type == RobotType.REFINERY))) {
-//                int d = taxicab(ri.location, robot);
                 int d = box(ri.location, robot);
                 if (d < minD) {
                     nearRef = ri.location;
@@ -161,8 +158,8 @@ public class Miner extends RobotPlayer {
     }
 
     void minerTurn() throws GameActionException {
-        if (rc.getTeamSoup() > 300 * designSchools) {
-            for (Direction d : directions) {
+        for (Direction d : directions) {
+            if (rc.getTeamSoup() > 700 * designSchools) {
                 if (tryBuild(RobotType.DESIGN_SCHOOL, d)) {
                     submitMessage(3, new int[]{1, 0, 0, 0, 0, 0});
                     break;
@@ -175,7 +172,8 @@ public class Miner extends RobotPlayer {
                 if (tryMine(dir)) {
                     mined = true;
                     Clock.yield();
-                    if (refinery != null && taxicab(nearestRefinery(), rc.getLocation()) >= 5) { //far from refinery...
+                    //if far from refinery, and just mined, then build a refinery.
+                    if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 5) {
                         for (Direction d : generalDirectionOf(dir)) {
                             if (tryBuild(RobotType.REFINERY, d)) {
                                 break;

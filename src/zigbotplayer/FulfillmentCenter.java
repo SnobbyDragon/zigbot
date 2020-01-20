@@ -9,8 +9,9 @@ public class FulfillmentCenter extends RobotPlayer{
     public void fCenterTurn() throws GameActionException {
         for (Direction dir : directions) {
             if (drones < rc.getTeamSoup() / 300) {
-                drones++;
-                tryBuild(RobotType.DELIVERY_DRONE, dir);
+                if(tryBuild(RobotType.DELIVERY_DRONE, dir)){
+                    drones++;
+                }
                 endTurn();
             }
         }

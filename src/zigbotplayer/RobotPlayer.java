@@ -17,14 +17,12 @@ public strictfp class RobotPlayer {
     int turnCount;
 
     /**
-     * The number of design schools
+     * The number of various types of robots built.
      */
     int designSchools = 0;
-
-    /**
-     * The number of drones.
-     */
     int drones = 0;
+    int landscapers = 0;
+
     /**
      * The last round a message was read from
      */
