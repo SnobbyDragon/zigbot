@@ -10,24 +10,29 @@ public strictfp class RobotPlayer {
 
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;
-    
+
     /**
      * The turn number.
      */
     int turnCount;
 
     /**
-     * 
+     * The number of design schools
      */
     int designSchools = 0;
-    
+
     /**
-     * 
+     * The number of drones.
+     */
+    int drones = 0;
+    /**
+     * The last round a message was read from
      */
     int messageReadFrom = 1;
 
     /**
-     * An array of all directions excluding CENTER
+     * An array of all directions excluding CENTER in
+     * clockwise order
      */
     Direction[] directions = {
             Direction.NORTH,
@@ -39,7 +44,7 @@ public strictfp class RobotPlayer {
             Direction.WEST,
             Direction.NORTHWEST,
     };
-    
+
     /**
      * An array of units that can be created by a miner
      */
@@ -48,8 +53,8 @@ public strictfp class RobotPlayer {
 
     /**
      * Returns whether the given direction is not CENTER
-     * @param d
-     * 		the given direction
+     *
+     * @param d the given direction
      * @return whether the given direction is not CENTER
      */
     int indInDirList(Direction d) {
@@ -63,8 +68,8 @@ public strictfp class RobotPlayer {
 
     /**
      * Returns directions adjacent to the given direction
-     * @param d
-     * 		the given direction
+     *
+     * @param d the given direction
      * @return an array of 3 directions
      */
     Direction[] generalDirectionOf(Direction d) {
@@ -74,8 +79,8 @@ public strictfp class RobotPlayer {
 
     /**
      * returns whether the direction points north
-     * @param d
-     * 		the given direction
+     *
+     * @param d the given direction
      * @return 1 if north, -1 if south, 0 otherwise
      */
     int directionNorth(Direction d) {
@@ -95,8 +100,8 @@ public strictfp class RobotPlayer {
 
     /**
      * returns whether the direction points east
-     * @param d
-     * 		the given direction
+     *
+     * @param d the given direction
      * @return 1 if east, -1 if west, 0 otherwise
      */
     int directionEast(Direction d) {
@@ -113,63 +118,60 @@ public strictfp class RobotPlayer {
                 return 0;
         }
     }
-    
+
     /**
      * Finds the direction from a location to another
-     * @param a
-     * 		a location on the map
-     * @param b
-     * 		another location on the map
+     *
+     * @param a a location on the map
+     * @param b another location on the map
      * @return the direction from a to b
      */
     Direction directionToLoc(MapLocation a, MapLocation b) {
-    	int dx = a.x - b.x;
-    	int dy = a.y - b.y;
-    	String dir = "";
-    	if (dy < 0) { //a is to the south of b
-    		dir += "SOUTH";
-    	} else if (dy > 0) { //a is to the north of b
-    		dir += "NORTH";
-    	}
-    	if (dx < 0) { //a is to the west of b
-    		dir += "WEST";
-    	} else if (dx > 0) { //a is to the east of b
-    		dir += "EAST";
-    	}
-    	if (dir.equals("")) { //a and b are the same
-    		dir = "CENTER";
-    	}
-    	return Direction.valueOf(dir);
+        int dx = a.x - b.x;
+        int dy = a.y - b.y;
+        String dir = "";
+        if (dy < 0) { //a is to the south of b
+            dir += "SOUTH";
+        } else if (dy > 0) { //a is to the north of b
+            dir += "NORTH";
+        }
+        if (dx < 0) { //a is to the west of b
+            dir += "WEST";
+        } else if (dx > 0) { //a is to the east of b
+            dir += "EAST";
+        }
+        if (dir.equals("")) { //a and b are the same
+            dir = "CENTER";
+        }
+        return Direction.valueOf(dir);
     }
-    
+
     /**
      * Taxicab distance between two locations
-     * @param a
-     * 		a location on the map
-     * @param b
-     * 		another location on the map
+     *
+     * @param a a location on the map
+     * @param b another location on the map
      * @return the taxicab distance between a and b
      */
     int taxicab(MapLocation a, MapLocation b) {
         return Math.abs(a.x - b.x) + Math.abs(a.y - b.y);
     }
-    
+
     /**
      * Box distance to find the minimum moves between two locations (since we can move diagonally. disregards obstacles)
-     * @param a 
-     * 		a location on the map
-     * @param b
-     * 		another location on the map
+     *
+     * @param a a location on the map
+     * @param b another location on the map
      * @return the minimum moves between a and b
      */
     int box(MapLocation a, MapLocation b) {
-    	return Math.max(a.x - b.x, a.y - b.y);
+        return Math.max(a.x - b.x, a.y - b.y);
     }
 
     /**
      * Returns the opposite direction of the given direction
-     * @param d
-     * 		the given direction
+     *
+     * @param d the given direction
      * @return the opposite direction
      * @throws RuntimeException
      */
@@ -179,6 +181,7 @@ public strictfp class RobotPlayer {
 
     /**
      * Gets all locations that are in sight of this robot.
+     *
      * @return a set of locations that can be seen
      */
     public Set<MapLocation> inSight() {
@@ -224,25 +227,22 @@ public strictfp class RobotPlayer {
                         me = new Miner();
                         break;
                     case REFINERY:
-                        me.runRefinery();
                         break;
                     case VAPORATOR:
-                        me.runVaporator();
                         break;
                     case DESIGN_SCHOOL:
-                        me.runDesignSchool();
+                        me = new DesignSchool();
                         break;
                     case FULFILLMENT_CENTER:
-                        me.runFulfillmentCenter();
+                        me = new FulfillmentCenter();
                         break;
                     case LANDSCAPER:
-                        me.runLandscaper();
+                        me = new Landscaper();
                         break;
                     case DELIVERY_DRONE:
-                        me.runDeliveryDrone();
+                        me = new DeliveryDrone();
                         break;
                     case NET_GUN:
-                        me.runNetGun();
                         break;
                 }
                 me.runUnit();
@@ -259,52 +259,6 @@ public strictfp class RobotPlayer {
         } catch (RuntimeException e) {
             e.printStackTrace();
         }
-    }
-
-    void runRefinery() throws GameActionException {
-        // System.out.println("Pollution: " + rc.sensePollution(rc.getLocation()));
-    }
-
-    void runVaporator() throws GameActionException {
-
-    }
-
-    void runDesignSchool() throws GameActionException {
-
-    }
-
-    void runFulfillmentCenter() throws GameActionException {
-        for (Direction dir : directions) {
-            if (designSchools < rc.getTeamSoup() / 200) {
-                tryBuild(RobotType.DELIVERY_DRONE, dir);
-                endTurn();
-            }
-        }
-    }
-
-    void runLandscaper() throws GameActionException {
-        moveAnywhere();
-    }
-
-    void runDeliveryDrone() throws GameActionException {
-        Team enemy = rc.getTeam().opponent();
-        if (!rc.isCurrentlyHoldingUnit()) {
-            // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
-            RobotInfo[] robots = rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED, enemy);
-
-            if (robots.length > 0) {
-                // Pick up a first robot within range
-                rc.pickUpUnit(robots[0].getID());
-                System.out.println("I picked up " + robots[0].getID() + "!");
-            }
-        } else {
-            // No close robots, so search for robots within sight radius
-            moveAnywhere();
-        }
-    }
-
-    void runNetGun() throws GameActionException {
-
     }
 
     /**
@@ -342,7 +296,7 @@ public strictfp class RobotPlayer {
     }
 
     /**
-     * Attempts to move in a given direction.
+     * Attempts to move in a given direction. Fails if it is impossible or would lead to walking into water.
      *
      * @param dir The intended direction of movement
      * @return true if a move was performed
@@ -350,7 +304,7 @@ public strictfp class RobotPlayer {
      */
     boolean tryMove(Direction dir) throws GameActionException {
         // System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
-        if (rc.isReady() && rc.canMove(dir)) {
+        if (rc.isReady() && rc.canMove(dir) && !rc.senseFlooding(rc.getLocation().add(dir))) {
             rc.move(dir);
             if (rc.getCooldownTurns() >= 1) {
                 endTurn();
@@ -378,38 +332,49 @@ public strictfp class RobotPlayer {
     }
 
 
-
     /*
      * Read messages to update map info... does nothing rn.
      */
     void updateFromMessages() throws GameActionException {
         for (; messageReadFrom < rc.getRoundNum(); messageReadFrom++) {
-            rc.getBlock(messageReadFrom);
+            for (Transaction t : rc.getBlock(messageReadFrom)) {
+                if (t.getMessage()[0] == TEAM_HASH) {
+                    if(t.getMessage()[1]==1){//landscaper built
+                        designSchools++;
+                    }
+                }
+            }
         }
     }
 
-    static class Message implements Comparable<Message>{
+    static class Message implements Comparable<Message> {
         int price;
         int[] msg;
-        Message(int pr, int[] ms){
+
+        Message(int pr, int[] ms) {
             price = pr;
             msg = ms;
+            assert ms.length==6;
         }
+
         @Override
         public int compareTo(Message o) {
             return price - o.price;
         }
     }
+
     PriorityQueue<Message> messageQueue = new PriorityQueue<>();
+
     void endTurn() throws GameActionException {
         Clock.yield();
         updateFromMessages();
-        if(!messageQueue.isEmpty()){
-            if(submitMessage(messageQueue.peek())){
+        if (!messageQueue.isEmpty()) {
+            if (submitMessage(messageQueue.peek())) {
                 messageQueue.poll();
             }
         }
     }
+
     /*
      * keep trying to submit a message until it works with starting price and increment.
      * Message is an int array of size 6.
@@ -424,9 +389,7 @@ public strictfp class RobotPlayer {
     private boolean submitMessage(Message m) throws GameActionException {
         int[] message = new int[7];
         message[0] = TEAM_HASH;
-        for(int i = 1; i < 7; i++){
-            message[i] = m.msg[i-1];
-        }
+        System.arraycopy(m.msg, 0, message, 1, 6);
         if (rc.canSubmitTransaction(message, m.price)) {
             rc.submitTransaction(message, m.price);
             return true;
