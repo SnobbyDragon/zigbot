@@ -127,14 +127,14 @@ public class Movement {
         int dy = a.y - b.y;
         String dir = "";
         if (dy < 0) { //a is to the south of b
-            dir += "SOUTH";
-        } else if (dy > 0) { //a is to the north of b
             dir += "NORTH";
+        } else if (dy > 0) { //a is to the north of b
+            dir += "SOUTH";
         }
         if (dx < 0) { //a is to the west of b
-            dir += "WEST";
-        } else if (dx > 0) { //a is to the east of b
             dir += "EAST";
+        } else if (dx > 0) { //a is to the east of b
+            dir += "WEST";
         }
         if (dir.equals("")) { //a and b are the same
             dir = "CENTER";

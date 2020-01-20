@@ -11,6 +11,8 @@ public strictfp class RobotPlayer {
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;
 
+    // still not implemented...
+    static MapLocation HQLocation;
     /*
      * The turn number.
      */
@@ -116,7 +118,7 @@ public strictfp class RobotPlayer {
                 case NET_GUN:
                     break;
             }
-        }catch (Exception e){
+        } catch (Exception e) {
             System.out.println(rc.getType() + " Has already broken, wow u suck");
             e.printStackTrace();
         }
@@ -139,15 +141,21 @@ public strictfp class RobotPlayer {
     }
 
 
-
     /*
-     * Read messages to update map info... does nothing rn.
+     * Read messages to update map info.
      */
     void updateFromMessages() throws GameActionException {
-        List<Transaction> recentMessages = blockChainHandler.getMessages(messageReadFrom, rc.getRoundNum() - 1);
-        for (Transaction t : recentMessages) {
-            if (t.getMessage()[1] == 1) {//landscaper built
-                designSchools++;
+        //List<Transaction> recentMessages = blockChainHandler.getMessages(messageReadFrom, rc.getRoundNum() - 1);
+        for (; messageReadFrom < rc.getRoundNum(); messageReadFrom++) {
+            for (Transaction t : rc.getBlock(messageReadFrom)) {//recentMessages) {
+                int[] msg = t.getMessage();
+                if(msg[0] == TEAM_HASH) {
+                    if (msg[1] == 1) {//landscaper built
+                        designSchools++;
+                    } else if (msg[1] == 2) {
+                        HQLocation = new MapLocation(msg[2], msg[3]);
+                    }
+                }
             }
         }
     }

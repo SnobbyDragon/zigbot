@@ -113,7 +113,7 @@ public class Miner extends RobotPlayer {
      * @throws GameActionException
      */
     void updateGoal() throws GameActionException {
-        MapLocation goal = null;
+        MapLocation goal = soup;
         if (mined) {
             goal = nearestRefinery();
         } else {
@@ -154,8 +154,6 @@ public class Miner extends RobotPlayer {
         if (!mined) {
             for (Direction dir : Movement.directions) {
                 while (tryMine(dir)) {
-                    mined = true;
-                    g = Goal.None;
                     System.out.println("Done mining soup " + rc.getSoupCarrying());
                     return;
                 }
@@ -163,8 +161,6 @@ public class Miner extends RobotPlayer {
         } else {
             for (Direction dir : Movement.directions) {
                 if (tryRefine(dir)) {
-                    mined = false;
-                    g = Goal.None;
                     System.out.println("Refined soup");
                     return;
                 }
@@ -172,10 +168,12 @@ public class Miner extends RobotPlayer {
         }
         //reset goals if the location we were supposed to go to is gone
         if (g == Goal.Refine && taxicab(rc.getLocation(), refinery) == 0) {
-            g = Goal.None;
+            refinery = HQLocation;
         } else if (g == Goal.Mine && taxicab(rc.getLocation(), soup) == 0) {
-            g = Goal.None;
+            soup = null;
         }
+        mined = rc.getSoupCarrying() == RobotType.MINER.soupLimit;
+        updateGoal();
     }
 
 

@@ -11,6 +11,7 @@ public class HQ extends RobotPlayer {
     }
 
     public void runUnit() throws GameActionException {
+        submitMessage(11, new int[]{2, rc.getLocation().x, rc.getLocation().y,0,0,0});
         while (true) {
             HQTurn();
             endTurn();

@@ -25,11 +25,11 @@ public class blockChainHandler {
 
     static int TEAM_HASH = 0x9e82c35a ^ (rc.getTeam() == Team.A ? 0 : 0xFFFFFF);
 
-    public static int checkSum(int[] code){
-        int NOTCRC32  = 0;
-        for(int i=0; i<6; i++){
+    public static int checkSum(int[] code) {
+        int NOTCRC32 = 0;
+        for (int i = 0; i < 6; i++) {
             int item = code[i];
-            for(int j=0; j<4; j++){
+            for (int j = 0; j < 4; j++) {
                 NOTCRC32 += item;
                 item >>= 8;
             }
@@ -37,11 +37,11 @@ public class blockChainHandler {
         return TEAM_HASH ^ NOTCRC32;
     }
 
-    public static void signThis(int[] code){
+    public static void signThis(int[] code) {
         code[6] = checkSum(code);
     }
 
-    public static boolean isValid(int[] code){
+    public static boolean isValid(int[] code) {
         return code[6] == checkSum(code);
     }
 
@@ -56,9 +56,9 @@ public class blockChainHandler {
         return false;
     }
 
-    public static List<Transaction> getMessages(int startRound, int endRound) throws GameActionException{
+    public static List<Transaction> getMessages(int startRound, int endRound) throws GameActionException {
         List<Transaction> result = new ArrayList<>();
-        for(int i=startRound; i<=endRound; i++) {
+        for (int i = startRound; i <= endRound; i++) {
             Transaction[] transactions = rc.getBlock(i);
             for (Transaction t : transactions) {
                 if (isValid(t.getMessage())) {
