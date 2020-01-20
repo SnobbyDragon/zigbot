@@ -9,10 +9,13 @@ import java.util.Arrays;
 public class DesignSchool extends RobotPlayer{
 
     public void designSchoolTurn() throws GameActionException {
+        System.out.println("Doing nothing...");
         for (Direction dir : directions) {
-            if (designSchools < rc.getTeamSoup() / 200) {
-                designSchools++;
-                tryBuild(RobotType.LANDSCAPER, dir);
+            if (landscapers < rc.getTeamSoup() / 200) {
+                System.out.println("BUILDING LANDSCAPER");
+                if(tryBuild(RobotType.LANDSCAPER, dir)) {
+                    landscapers++;
+                }
                 endTurn();
             }
         }
@@ -22,7 +25,6 @@ public class DesignSchool extends RobotPlayer{
         while (true) {
             designSchoolTurn();
             endTurn();
-            System.out.println(Arrays.toString(rc.getBlock(rc.getRoundNum() - 1)));
         }
     }
 }

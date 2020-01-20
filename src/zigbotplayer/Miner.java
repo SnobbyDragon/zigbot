@@ -159,7 +159,7 @@ public class Miner extends RobotPlayer {
 
     void minerTurn() throws GameActionException {
         for (Direction d : directions) {
-            if (rc.getTeamSoup() > 300 * designSchools) {
+            if (rc.getTeamSoup() > 700 * designSchools) {
                 if (tryBuild(RobotType.DESIGN_SCHOOL, d)) {
                     submitMessage(3, new int[]{1, 0, 0, 0, 0, 0});
                     break;
@@ -172,7 +172,8 @@ public class Miner extends RobotPlayer {
                 if (tryMine(dir)) {
                     mined = true;
                     Clock.yield();
-                    if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 5) { //far from refinery...
+                    //if far from refinery, and just mined, then build a refinery.
+                    if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 5) {
                         for (Direction d : generalDirectionOf(dir)) {
                             if (tryBuild(RobotType.REFINERY, d)) {
                                 break;
