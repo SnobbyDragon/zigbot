@@ -50,8 +50,8 @@ public final class BuildUnits {
     }
 
     public static MapLocation build(RobotPlayer builder, RobotType toBuild) throws GameActionException {
-        for (Direction d : builder.directions) {
-            if (builder.tryBuild(toBuild, d)) {
+        for (Direction d : Movement.directions) {
+            if (tryBuild(builder, toBuild, d)) {
                 switch (toBuild) {
                     case DESIGN_SCHOOL:
                         // note: designSchool increment will happen automatically when messages are read later.
@@ -72,5 +72,23 @@ public final class BuildUnits {
             }
         }
         return null;
+    }
+
+    /**
+     * Attempts to build a given robot in a given direction.
+     *
+     * @param type The type of the robot to build
+     * @param dir  The intended direction of movement
+     * @return true if a move was performed
+     * @throws GameActionException
+     */
+    static boolean tryBuild(RobotPlayer rp, RobotType type, Direction dir) throws GameActionException {
+        if (rc.isReady() && rc.canBuildRobot(type, dir)) {
+            rc.buildRobot(type, dir);
+            if (rc.getCooldownTurns() >= 1) {
+                rp.endTurn();
+            }
+            return true;
+        } else return false;
     }
 }

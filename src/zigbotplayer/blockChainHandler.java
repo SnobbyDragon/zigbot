@@ -6,7 +6,6 @@ import battlecode.common.Transaction;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.zip.CRC32;
 
 import static zigbotplayer.RobotPlayer.rc;
 
@@ -27,15 +26,15 @@ public class blockChainHandler {
     static int TEAM_HASH = 0x9e82c35a ^ (rc.getTeam() == Team.A ? 0 : 0xFFFFFF);
 
     public static int checkSum(int[] code){
-        CRC32 sum = new CRC32();
+        int NOTCRC32  = 0;
         for(int i=0; i<6; i++){
             int item = code[i];
             for(int j=0; j<4; j++){
-                sum.update(item);
+                NOTCRC32 += item;
                 item >>= 8;
             }
         }
-        return TEAM_HASH ^ (int) sum.getValue();
+        return TEAM_HASH ^ NOTCRC32;
     }
 
     public static void signThis(int[] code){

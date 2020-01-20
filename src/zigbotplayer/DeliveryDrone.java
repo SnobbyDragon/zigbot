@@ -5,10 +5,9 @@ import battlecode.common.GameConstants;
 import battlecode.common.RobotInfo;
 import battlecode.common.Team;
 
-import java.util.Arrays;
-
 public class DeliveryDrone extends RobotPlayer {
 
+    Movement m = new Movement(this, null);
     public void droneTurn() throws GameActionException {
         Team enemy = rc.getTeam().opponent();
         if (!rc.isCurrentlyHoldingUnit()) {
@@ -22,7 +21,7 @@ public class DeliveryDrone extends RobotPlayer {
             }
         } else {
             // No close robots, so search for robots within sight radius
-            moveAnywhere();
+            m.step();
         }
     }
 

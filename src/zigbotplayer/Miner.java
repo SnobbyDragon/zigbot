@@ -20,9 +20,8 @@ public class Miner extends RobotPlayer {
     enum Goal {None, Refine, Mine, Explore}
 
     ;
-
+    Movement movement = new Movement(this, null);
     Goal g = Goal.None;
-    Direction exploreDir = this.pickExploreDirection();
     int exploreRounds = 0;
 
     /**
@@ -51,10 +50,10 @@ public class Miner extends RobotPlayer {
      * @throws GameActionException
      */
     boolean generalMove(Direction d) throws GameActionException {
-        Direction[] genDirs = generalDirectionOf(d);
+        Direction[] genDirs = Movement.generalDirectionOf(d);
         int rand = (int) (Math.random() * genDirs.length);
         for (int i = 0; i < genDirs.length; i++) {
-            if (tryMove(genDirs[(i + rand) % genDirs.length])) {
+            if (new Movement(this, null).tryMove(genDirs[(i + rand) % genDirs.length])) {
                 return true;
             }
         }
@@ -67,36 +66,22 @@ public class Miner extends RobotPlayer {
      * @throws GameActionException
      */
     void chooseMove() throws GameActionException {
-        printGoal();
-        if (g == Goal.None || (g == Goal.Explore && exploreRounds <= 0)) {
+        if (movement == null || g == Goal.None || (g == Goal.Explore && exploreRounds <= 0)) {
             updateGoal();
+            printGoal();
         }
         if (g == Goal.None || g == Goal.Explore) {
             exploreRounds--;
-            if (!generalMove(exploreDir)) {
-                exploreDir = randomDirection();
+            movement.step();
+        }
+        Movement.StepResult sr = movement.step();
+        if (sr != Movement.StepResult.DONE) {
+            if (sr == Movement.StepResult.STUCK) {
+                movement = new Movement(this, null);
+                g = Goal.Explore;
+                exploreRounds = 1 + (int) (Math.random() * 4);
+                System.out.println("EXPLORE FOR  " + exploreRounds);
             }
-        } else {
-            MapLocation dest;
-            if (g == Goal.Refine) {
-                dest = refinery;
-            } else {
-                assert g == Goal.Mine;
-                dest = soup;
-            }
-            for (Direction d : directions) {
-                if (taxicab(rc.getLocation().add(d), dest) < taxicab(rc.getLocation(), dest)) {
-                    if (tryMove(d)) {
-                        System.out.println("MOVED " + d);
-                        return;
-                    }
-                }
-            }
-            // failed to move
-            exploreDir = this.pickExploreDirection();
-            g = Goal.Explore;
-            exploreRounds = 1 + (int) (Math.random() * 4);
-            System.out.println("EXPLORE FOR  " + exploreRounds);
         }
     }
 
@@ -129,14 +114,13 @@ public class Miner extends RobotPlayer {
      */
     void updateGoal() throws GameActionException {
         MapLocation goal = null;
-        System.out.println("Updating goal...");
         if (mined) {
             goal = nearestRefinery();
-            System.out.println("Set goal to " + goal);
         } else {
             for (MapLocation ml : inSight()) {
                 if (rc.senseSoup(ml) > 0) {
                     goal = ml;
+                    soup = goal;
                     break;
                 }
             }
@@ -144,19 +128,19 @@ public class Miner extends RobotPlayer {
         if (goal != null) {
             if (mined) {
                 g = Goal.Refine;
-                refinery = goal;
             } else {
                 g = Goal.Mine;
-                soup = goal;
             }
         }
+        System.out.println("Set goal to " + goal);
+        movement = new Movement(this, goal);
     }
 
     void printGoal() {
         if (g == Goal.Refine) {
-            System.out.println("Goal: " + g + ", at: " + refinery + " Robot at " + rc.getLocation());
+            System.out.println("Goal: " + g + ", at: " + refinery + " Robot at " + movement.destination);
         } else if (g == Goal.Mine) {
-            System.out.println("Goal: " + g + ", at: " + soup + " Robot at " + rc.getLocation());
+            System.out.println("Goal: " + g + ", at: " + soup + " Robot at " + movement.destination);
         }
     }
 
@@ -166,20 +150,18 @@ public class Miner extends RobotPlayer {
         if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 6 && box(soup, rc.getLocation()) < 2) {
             BuildUnits.considerBuild(this, RobotType.REFINERY);
         }
+        chooseMove();
         if (!mined) {
-            chooseMove();
-            for (Direction dir : directions) {
-                if (tryMine(dir)) {
+            for (Direction dir : Movement.directions) {
+                while (tryMine(dir)) {
                     mined = true;
-                    Clock.yield();
                     g = Goal.None;
                     System.out.println("Done mining soup " + rc.getSoupCarrying());
                     return;
                 }
             }
         } else {
-            chooseMove();
-            for (Direction dir : directions) {
+            for (Direction dir : Movement.directions) {
                 if (tryRefine(dir)) {
                     mined = false;
                     g = Goal.None;
@@ -196,36 +178,6 @@ public class Miner extends RobotPlayer {
         }
     }
 
-    /**
-     * Chooses a direction to explore based on map edges, water, elevation, nearby units
-     *
-     * @return a direction to explore
-     */
-    Direction pickExploreDirection() {
-        String dir = "";
-        MapLocation current = rc.getLocation();
-        int sightRadiusSquared = rc.getCurrentSensorRadiusSquared();
-
-        //first check if near edge of map, we don't want to move towards the edge when there's already nothing there
-        if ((MAP_HEIGHT - current.y) * (MAP_HEIGHT - current.y) < sightRadiusSquared) { //can see the north edge of the map, must move south
-
-        } else if (current.y < sightRadiusSquared) { //can see the south edge of the map, must move north
-
-        }
-        if (MAP_WIDTH - current.x < sightRadiusSquared) { //can see the east edge of the map, must move west
-            dir += "WEST";
-        } else if (current.x < sightRadiusSquared) { //can see the west edge of the map, must move east
-            dir += "EAST";
-        }
-        if (!dir.equals("")) {
-            return Direction.valueOf(dir);
-        }
-        //not near the edge of the map, so check for nearby robots
-
-        //not near edge of map, no nearby robots
-        return this.randomDirection();
-    }
-
 
     /**
      * Attempts to mine soup in a given direction.
@@ -238,7 +190,7 @@ public class Miner extends RobotPlayer {
         if (rc.isReady() && rc.canMineSoup(dir)) {
             rc.mineSoup(dir);
             if (rc.getCooldownTurns() >= 1) {
-                Clock.yield();
+                endTurn();
             }
             return true;
         } else return false;
@@ -255,7 +207,7 @@ public class Miner extends RobotPlayer {
         if (rc.isReady() && rc.canDepositSoup(dir)) {
             rc.depositSoup(dir, rc.getSoupCarrying());
             if (rc.getCooldownTurns() >= 1) {
-                Clock.yield();
+                endTurn();
             }
             return true;
         } else return false;

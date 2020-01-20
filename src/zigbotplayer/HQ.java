@@ -1,7 +1,6 @@
 package zigbotplayer;
 
 import battlecode.common.*;
-import javafx.util.Builder;
 
 import java.util.Arrays;
 
