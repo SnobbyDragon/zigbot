@@ -91,19 +91,7 @@ public class Movement {
         if (rp.taxicab(rc.getLocation(), destination) <= requiredDistance) {
             return StepResult.DONE;
         }
-        for (Direction d : Movement.directionsOf(dir)) {
-            if (!seen.contains(rc.getLocation().add(d)) && tryMove(d)) {
-                return StepResult.MOVED;
-            }
-        }
-        for(Direction d: Movement.directionsOf(dir)){
-            //maybe we got trapped in locations we've been to, but there is still a path
-            if (tryMove(d)) {
-                return StepResult.MOVED;
-            }
-        }
-        // not good to reach here...
-        return StepResult.STUCK;
+        return stepAvoidingSeen(dir);
     }
 
     /**
@@ -141,6 +129,10 @@ public class Movement {
         if (exploreDir == null) {
             exploreDir = randomDirection();
         }
+        return stepAvoidingSeen(exploreDir);
+    }
+
+    private StepResult stepAvoidingSeen(Direction exploreDir) throws GameActionException {
         for (Direction d : Movement.directionsOf(exploreDir)) {
             if (!seen.contains(rc.getLocation().add(d)) && tryMove(d)) {
                 return StepResult.MOVED;

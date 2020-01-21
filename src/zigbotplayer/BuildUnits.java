@@ -20,7 +20,7 @@ public final class BuildUnits {
         int soup = rc.getTeamSoup();
         switch (toBuild) {
             case DESIGN_SCHOOL:
-                if (soup < 700 * builder.designSchools) {
+                if (soup < 250 + 700 * builder.designSchools) {
                     return null; // there is not a lot of soup and a lot of schools already
                 }
                 break;
@@ -35,7 +35,12 @@ public final class BuildUnits {
                 }
                 break;
             case DELIVERY_DRONE:
-                if (soup < builder.drones * 300) {
+                if (soup < builder.drones * 100) {
+                    return null;
+                }
+                break;
+            case FULFILLMENT_CENTER:
+                if (soup < 260 + builder.fullfillmentCenters * 400) {
                     return null;
                 }
             default:
@@ -51,16 +56,24 @@ public final class BuildUnits {
 
     public static MapLocation build(RobotPlayer builder, RobotType toBuild) throws GameActionException {
         for (Direction d : Movement.directions) {
-            if ((toBuild == RobotType.DESIGN_SCHOOL || toBuild == RobotType.NET_GUN ||
-                    toBuild == RobotType.FULFILLMENT_CENTER)
-                    && RobotPlayer.HQLocation != null && builder.box(builder.rc.getLocation().add(d), RobotPlayer.HQLocation) < 3) {
+            int hqDist;
+            if (RobotPlayer.HQLocation == null) {
+                hqDist = 0;
+            } else {
+                hqDist = builder.box(rc.getLocation().add(d), RobotPlayer.HQLocation);
+            }
+            //things that don't move should go away from HQ
+            if ((toBuild == RobotType.DESIGN_SCHOOL || toBuild == RobotType.NET_GUN || toBuild == RobotType.FULFILLMENT_CENTER) && hqDist < 3){
                 continue;
             }
             if (tryBuild(builder, toBuild, d)) {
                 switch (toBuild) {
                     case DESIGN_SCHOOL:
                         // note: designSchool increment will happen automatically when messages are read later.
-                        builder.submitMessage(3, new int[]{1, 0, 0, 0, 0, 0});
+                        builder.submitMessage(5, new int[]{1, 0, 0, 0, 0, 0});
+                        break;
+                    case FULFILLMENT_CENTER:
+                        builder.submitMessage(5, new int[]{3, 0, 0, 0, 0, 0});
                         break;
                     case LANDSCAPER:
                         builder.landscapers++;

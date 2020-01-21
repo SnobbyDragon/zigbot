@@ -6,6 +6,7 @@ import battlecode.common.RobotType;
 import battlecode.common.MapLocation;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class Landscaper extends RobotPlayer {
@@ -36,13 +37,16 @@ public class Landscaper extends RobotPlayer {
 
     void updateHQLoc() {
         System.out.println("UPDATED YAY");
-        Direction[] dirs = Movement.directions;
-        for (int i = dirs.length; i != 0; i = (i+5)%dirs.length) {
-            Direction d = dirs[i % dirs.length];
+        for (Direction d : Movement.directions) {
             depositSites.add(HQLocation.add(d));
-            digSites.add(HQLocation.add(d).add(d));
-            standSites.add(HQLocation.add(d).add(d.rotateLeft()));
+            // we want the stand sites to be more evenly spread
+            standSites.add(HQLocation.add(d).add(d));
+            standSites.add(HQLocation.subtract(d).subtract(d.rotateLeft()));
+            digSites.add(HQLocation.add(d).add(d).add(d.rotateLeft()));
+            digSites.add(HQLocation.add(d).add(d).add(d));
+            digSites.add(HQLocation.add(d).add(d).add(d.rotateRight()));
         }
+
         filterOutOfBounds(depositSites);
         filterOutOfBounds(digSites);
         filterOutOfBounds(standSites);
@@ -92,7 +96,6 @@ public class Landscaper extends RobotPlayer {
         } else if (currentGoal == Goal.Deposit) {
             executeDepositMode();
         }
-        System.out.println("I reached the end of the landscaperTurn subroutine");
     }
 
     public void goToStandSite() throws GameActionException {
@@ -104,18 +107,22 @@ public class Landscaper extends RobotPlayer {
         System.out.println("NEAR HQ.");
         while (true) {
             for (MapLocation ss : standSites) {
-                if (rc.canSenseLocation(ss) && rc.getLocation().isWithinDistanceSquared(ss, RobotType.LANDSCAPER.sensorRadiusSquared)
-                        && rc.senseRobotAtLocation(ss) == null) {
-                    m = new Movement(this, ss, 0);
+                m = new Movement(this, ss, 0);
+                sr = m.step();
+                int occupiedTime = 0;
+                while (sr == Movement.StepResult.MOVED) {
+                    if (rc.canSenseLocation(ss) && rc.senseRobotAtLocation(ss) != null) {
+                        if(occupiedTime > 3){//robot's been standing here for a while
+                            break;
+                        }else{
+                            occupiedTime++;
+                        }
+                    }
                     sr = m.step();
-                    while (sr == Movement.StepResult.MOVED) {
-                        sr = m.step();
-                    }
-                    if (sr == Movement.StepResult.DONE) {
-                        onStandSite = true;
-                        return;
-                    }
-                    assert sr == Movement.StepResult.STUCK;
+                }
+                if (sr == Movement.StepResult.DONE) {
+                    onStandSite = true;
+                    return;
                 }
             }
         }
@@ -126,10 +133,10 @@ public class Landscaper extends RobotPlayer {
      */
     boolean executeRefillMode() throws GameActionException {
         MapLocation digSite = null;
-        for (int i = 0; i < digSites.size(); i++) {
-            int d = box(digSites.get(i), rc.getLocation());
-            if (d == 1) {
-                digSite = digSites.get(i);
+        for (MapLocation site : digSites) {
+            int d = box(site, rc.getLocation());
+            if (d == 1 && rc.senseRobotAtLocation(site)==null) {
+                digSite = site;
                 break;
             }
         }

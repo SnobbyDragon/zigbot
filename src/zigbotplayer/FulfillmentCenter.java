@@ -6,7 +6,10 @@ import battlecode.common.RobotType;
 public class FulfillmentCenter extends RobotPlayer {
 
     public void fCenterTurn() {
-        BuildUnits.considerBuild(this, RobotType.DELIVERY_DRONE);
+        System.out.println("Let's build a drone?");
+        if(BuildUnits.considerBuild(this, RobotType.DELIVERY_DRONE)!=null){
+            drones++;
+        }
     }
 
     public void runUnit() throws GameActionException {

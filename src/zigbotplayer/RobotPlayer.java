@@ -9,7 +9,7 @@ public strictfp class RobotPlayer {
     public static RobotController rc;
 
     // phase where miners go away from HQ and let landscapers build
-    static final int HQ_WALL_PHASE = 200;
+    static final int HQ_WALL_PHASE = 260;
 
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;
@@ -27,6 +27,7 @@ public strictfp class RobotPlayer {
     int designSchools = 0;
     int drones = 0;
     int landscapers = 0;
+    int fullfillmentCenters = 0;
 
     /**
      * The last round a message was read from
@@ -118,6 +119,7 @@ public strictfp class RobotPlayer {
                     me = new DeliveryDrone();
                     break;
                 case NET_GUN:
+                    me = new NetGun();
                     break;
             }
         } catch (Exception e) {
@@ -160,6 +162,8 @@ public strictfp class RobotPlayer {
                         if(this instanceof Landscaper){
                             ((Landscaper)(this)).updateHQLoc();
                         }
+                    } else if (msg[1] == 3) {
+                        fullfillmentCenters++;
                     }
                 }
             }

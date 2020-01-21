@@ -57,11 +57,12 @@ public class Miner extends RobotPlayer {
             movement.step();
         }
         Movement.StepResult sr = movement.step();
+        wardOffFoes();
         if (sr != Movement.StepResult.DONE) {
             if (sr == Movement.StepResult.STUCK) {
                 movement = new Movement(this);
                 g = Goal.Explore;
-                exploreRounds = 1 + (int) (Math.random() * 4);
+                exploreRounds = 5 + (int) (Math.random() * 4);
                 System.out.println("EXPLORE FOR  " + exploreRounds);
             }
         }
@@ -127,6 +128,24 @@ public class Miner extends RobotPlayer {
         }
     }
 
+    void wardOffFoes() {
+        int foeDroneCount = 0;
+        int netGunCount = 0;
+        for (RobotInfo ri : rc.senseNearbyRobots()) {
+            // we stop using the HQ as a refinery eventually
+            if (ri.type == RobotType.DELIVERY_DRONE && ri.team == ri.getTeam().opponent()) {
+                foeDroneCount++;
+            } else if (ri.type == RobotType.NET_GUN && ri.team == ri.getTeam()) {
+                netGunCount++;
+            }
+        }
+        System.out.println("NET: " + netGunCount + " DRONE: " + foeDroneCount);
+        if (netGunCount * 2 - foeDroneCount < 0) {
+            System.out.println("BUILD NET GUN!");
+            BuildUnits.considerBuild(this, RobotType.NET_GUN);
+        }
+    }
+
     void minerTurn() throws GameActionException {
         if (rc.getRoundNum() > HQ_WALL_PHASE && box(HQLocation, rc.getLocation()) < 3) {
             if (refinery == HQLocation) {
@@ -138,6 +157,7 @@ public class Miner extends RobotPlayer {
                 m.step();
             }
         }
+        BuildUnits.considerBuild(this, RobotType.FULFILLMENT_CENTER);
         if ((refinery == null || box(nearestRefinery(), rc.getLocation()) >= 4) && soup != null && box(soup, rc.getLocation()) < 2) {
             BuildUnits.considerBuild(this, RobotType.REFINERY);
             nearestRefinery(); // update nearest refinery
@@ -145,14 +165,15 @@ public class Miner extends RobotPlayer {
         BuildUnits.considerBuild(this, RobotType.DESIGN_SCHOOL);
         chooseMove();
         if (!mined && soup != null) {
-            while (tryMine(rc.getLocation().directionTo(soup)));
+            while (tryMine(rc.getLocation().directionTo(soup))) ;
         } else if (refinery != null) {
-            while (tryRefine(rc.getLocation().directionTo(refinery)));
+            while (tryRefine(rc.getLocation().directionTo(refinery))) ;
         }
         //reset goals if the location we were supposed to go to is gone
-        if (g == Goal.Refine && taxicab(rc.getLocation(), refinery) == 0) {
+        if (g == Goal.Refine && refinery != null && rc.canSenseLocation(refinery) &&
+                rc.senseRobotAtLocation(refinery).type != RobotType.REFINERY) {
             refinery = null;
-        } else if (g == Goal.Mine && taxicab(rc.getLocation(), soup) == 0) {
+        } else if (g == Goal.Mine && soup != null && rc.canSenseLocation(soup) && rc.senseSoup(soup) == 0) {
             soup = null;
         }
         mined = rc.getSoupCarrying() == RobotType.MINER.soupLimit;
