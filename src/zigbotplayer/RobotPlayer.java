@@ -9,7 +9,7 @@ public strictfp class RobotPlayer {
     public static RobotController rc;
 
     // phase where miners go away from HQ and let landscapers build
-    static final int HQ_WALL_PHASE = 260;
+    static final int HQ_WALL_PHASE = 140;
 
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;

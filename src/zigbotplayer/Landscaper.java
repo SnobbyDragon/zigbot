@@ -2,20 +2,18 @@ package zigbotplayer;
 
 import battlecode.common.Direction;
 import battlecode.common.GameActionException;
-import battlecode.common.RobotType;
 import battlecode.common.MapLocation;
+import battlecode.common.RobotType;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class Landscaper extends RobotPlayer {
 
     Goal currentGoal = Goal.None; // initialization
-
-    // goalLocation and goalElevation are part of a system that I'm phasing out; use digSite and depositSite instead
-    MapLocation goalLocation = new MapLocation(38, 28); // Choice of (38,28) is completely arbitrary
-    int goalElevation = 75; // Choice of 75 is completely arbirary
+    // amount of evenness of distribution this landscaper wants
+    double ADHD = Math.random() * 30 + 10;
 
     // These coordinates are completely arbitrary
     // Ultimately, we will select these coordinates intelligently so our robot builds a wall
@@ -46,7 +44,6 @@ public class Landscaper extends RobotPlayer {
             digSites.add(HQLocation.add(d).add(d).add(d));
             digSites.add(HQLocation.add(d).add(d).add(d.rotateRight()));
         }
-
         filterOutOfBounds(depositSites);
         filterOutOfBounds(digSites);
         filterOutOfBounds(standSites);
@@ -75,9 +72,7 @@ public class Landscaper extends RobotPlayer {
     public void landscaperTurn() throws GameActionException {
         // STEP ZERO: Go to a standing site!
         if (!onStandSite) {
-            System.out.println("GOING TO FIND A PLACE TO STAND");
             goToStandSite();
-            System.out.println("FOUND IT");
         }
         // STEP ONE: Decide what the goal should be
         if (rc.getDirtCarrying() == RobotType.LANDSCAPER.dirtLimit) { // if full
@@ -104,28 +99,52 @@ public class Landscaper extends RobotPlayer {
         while (sr != Movement.StepResult.DONE) {
             sr = m.step();
         }
-        System.out.println("NEAR HQ.");
+        int min = 999;
+        MapLocation minLoc = null;
+        for (MapLocation dep : depositSites) {
+            if (rc.canSenseLocation(dep) && rc.senseElevation(dep) < min) {
+                min = rc.senseElevation(dep);
+                minLoc = dep;
+            }
+        }
+        if(minLoc!=null) {
+            if(tryGoToLocation(minLoc.add(HQLocation.directionTo(minLoc)))){return;};
+            if(tryGoToLocation(minLoc.add(HQLocation.directionTo(minLoc).rotateLeft()))){return;};
+            if(tryGoToLocation(minLoc.add(HQLocation.directionTo(minLoc).rotateRight()))){return;};
+        }
         while (true) {
-            for (MapLocation ss : standSites) {
-                m = new Movement(this, ss, 0);
-                sr = m.step();
-                int occupiedTime = 0;
-                while (sr == Movement.StepResult.MOVED) {
-                    if (rc.canSenseLocation(ss) && rc.senseRobotAtLocation(ss) != null) {
-                        if(occupiedTime > 3){//robot's been standing here for a while
-                            break;
-                        }else{
-                            occupiedTime++;
-                        }
-                    }
-                    sr = m.step();
-                }
-                if (sr == Movement.StepResult.DONE) {
+            for (MapLocation ml : standSites) {
+                tryGoToLocation(ml);
+                if(box(rc.getLocation(), HQLocation)==2){
                     onStandSite = true;
+                    System.out.println("Happy");
                     return;
                 }
             }
         }
+    }
+
+    boolean tryGoToLocation(MapLocation ss) throws GameActionException {
+        System.out.println("GOAL " + ss);
+        Movement m = new Movement(this, ss, 0);
+        Movement.StepResult sr = m.step();
+        int occupiedTime = 0;
+        while (sr == Movement.StepResult.MOVED) {
+            if (rc.canSenseLocation(ss) && rc.senseRobotAtLocation(ss) != null) {
+                if (occupiedTime > 3) {//robot's been standing here for a while
+                    break;
+                } else {
+                    occupiedTime++;
+                }
+            }
+            sr = m.step();
+        }
+        if (sr == Movement.StepResult.DONE) {
+            onStandSite = true;
+            System.out.println("Happy");
+            return true;
+        }
+        return false;
     }
 
     /*
@@ -135,7 +154,7 @@ public class Landscaper extends RobotPlayer {
         MapLocation digSite = null;
         for (MapLocation site : digSites) {
             int d = box(site, rc.getLocation());
-            if (d == 1 && rc.senseRobotAtLocation(site)==null) {
+            if (d == 1 && rc.senseRobotAtLocation(site) == null) {
                 digSite = site;
                 break;
             }
@@ -157,19 +176,26 @@ public class Landscaper extends RobotPlayer {
         System.out.println("I am executing deposit mode");
         MapLocation depositSite = null;
         int minH = 99999;
+        int worstH = 9999;
         for (int i = 0; i < depositSites.size(); i++) {
             int d = box(depositSites.get(i), rc.getLocation());
+            if(rc.canSenseLocation(depositSites.get(i))) {
+                worstH = Math.min(worstH, rc.senseElevation(depositSites.get(i)));
+            }
             if (d == 1) {
                 if (depositSite == null || rc.senseElevation(depositSites.get(i)) < minH) {
-                    depositSite = depositSites.get(i);
-                    minH = rc.senseElevation(depositSite);
+                    minH = rc.senseElevation(depositSites.get(i));
+                    if (rc.senseRobotAtLocation(depositSites.get(i)) == null) {
+                        depositSite = depositSites.get(i);
+                    }
                 }
             }
         }
-        if (depositSite != null) { // If adjacent to digSite, dig from it!
+        if (depositSite != null && minH - worstH <= ADHD) {//if there is a deposit site nearby and levels about even, deposit.
             tryDepositDirt(rc.getLocation().directionTo(depositSite));
             return true;
-        } else { // If not adjacent to digSite, move toward it
+        } else { // If not adjacent to digSite, or we need to go somewhere else, move
+            System.out.println("Seems bad, minH " + minH + " worstH " + worstH + " ADHD " + ADHD);
             onStandSite = false;
             return false;
         }

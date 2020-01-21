@@ -1,9 +1,6 @@
 package zigbotplayer;
 
-import battlecode.common.Direction;
-import battlecode.common.GameActionException;
-import battlecode.common.MapLocation;
-import battlecode.common.RobotController;
+import battlecode.common.*;
 
 import java.util.ArrayList;
 import java.util.HashSet;
@@ -38,6 +35,7 @@ public class Movement {
     public Movement(RobotPlayer you) {
         rp = you;
         rc = RobotPlayer.rc;
+        System.out.println("Moving to (anywhere)");
     }
 
     /*
@@ -48,6 +46,7 @@ public class Movement {
         rp = you;
         rc = RobotPlayer.rc;
         exploreDir = direction;
+        System.out.println("Moving in direction " + direction);
         /*
         destination = you.rc.getLocation();
         for(int i = 0; i < 30; i++){
@@ -64,6 +63,7 @@ public class Movement {
         rc = RobotPlayer.rc;
         destination = dest;
         requiredDistance = dist;
+        System.out.println("Moving within " + dist + "of" + dest);
     }
 
     /*
@@ -132,16 +132,20 @@ public class Movement {
         return stepAvoidingSeen(exploreDir);
     }
 
+    int fails = 0;
     private StepResult stepAvoidingSeen(Direction exploreDir) throws GameActionException {
         for (Direction d : Movement.directionsOf(exploreDir)) {
             if (!seen.contains(rc.getLocation().add(d)) && tryMove(d)) {
                 return StepResult.MOVED;
             }
         }
-        for(Direction d: Movement.directionsOf(exploreDir)){
-            //maybe we got trapped in locations we've been to, but there is still a path
-            if (tryMove(d)) {
-                return StepResult.MOVED;
+        fails++;
+        if(fails < 4) {
+            for (Direction d : Movement.directionsOf(exploreDir)) {
+                //maybe we got trapped in locations we've been to, but there is still a path
+                if (tryMove(d)) {
+                    return StepResult.MOVED;
+                }
             }
         }
         return StepResult.STUCK;
@@ -180,7 +184,7 @@ public class Movement {
         while (!rc.isReady()) {
             rp.endTurn();
         }
-        if (rc.canMove(dir) && !rc.senseFlooding(rc.getLocation().add(dir))) {
+        if (rc.canMove(dir) && (!rc.senseFlooding(rc.getLocation().add(dir)) || rc.getType() == RobotType.DELIVERY_DRONE)) {
             rc.move(dir);
             if (rc.getCooldownTurns() >= 1) {
                 rp.endTurn();

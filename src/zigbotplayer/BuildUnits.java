@@ -20,17 +20,17 @@ public final class BuildUnits {
         int soup = rc.getTeamSoup();
         switch (toBuild) {
             case DESIGN_SCHOOL:
-                if (soup < 250 + 700 * builder.designSchools) {
+                if (soup < 100 + 500 * builder.designSchools) {
                     return null; // there is not a lot of soup and a lot of schools already
                 }
                 break;
             case MINER:
-                if (soup < Math.min(300, builder.miners * 40)) {// build miners when there is soup excess
+                if (soup < 40 + builder.miners * 40) {// build miners when there is soup excess
                     return null;
                 }
                 break;
             case LANDSCAPER:
-                if (soup < Math.min(300, builder.landscapers * 200)) {
+                if (soup < Math.min(300, builder.landscapers * 50)) {
                     return null;
                 }
                 break;
@@ -40,9 +40,11 @@ public final class BuildUnits {
                 }
                 break;
             case FULFILLMENT_CENTER:
-                if (soup < 260 + builder.fullfillmentCenters * 400) {
+                return null;//fullfillment centers and drones suck
+                /*
+                if (soup < 160 + builder.fullfillmentCenters * 600) {
                     return null;
-                }
+                }*/
             default:
                 break;
         }
@@ -63,17 +65,18 @@ public final class BuildUnits {
                 hqDist = builder.box(rc.getLocation().add(d), RobotPlayer.HQLocation);
             }
             //things that don't move should go away from HQ
-            if ((toBuild == RobotType.DESIGN_SCHOOL || toBuild == RobotType.NET_GUN || toBuild == RobotType.FULFILLMENT_CENTER) && hqDist < 3){
+            if ((toBuild == RobotType.DESIGN_SCHOOL || toBuild == RobotType.REFINERY ||
+                    toBuild == RobotType.NET_GUN || toBuild == RobotType.FULFILLMENT_CENTER) && hqDist < 3) {
                 continue;
             }
             if (tryBuild(builder, toBuild, d)) {
                 switch (toBuild) {
                     case DESIGN_SCHOOL:
                         // note: designSchool increment will happen automatically when messages are read later.
-                        builder.submitMessage(5, new int[]{1, 0, 0, 0, 0, 0});
+                        builder.submitMessage(8, new int[]{1, 0, 0, 0, 0, 0});
                         break;
                     case FULFILLMENT_CENTER:
-                        builder.submitMessage(5, new int[]{3, 0, 0, 0, 0, 0});
+                        builder.submitMessage(8, new int[]{3, 0, 0, 0, 0, 0});
                         break;
                     case LANDSCAPER:
                         builder.landscapers++;
@@ -101,9 +104,12 @@ public final class BuildUnits {
      * @throws GameActionException
      */
     static boolean tryBuild(RobotPlayer rp, RobotType type, Direction dir) throws GameActionException {
+        while (rc.getCooldownTurns() >= 1) {
+            rp.endTurn();
+        }
         if (rc.isReady() && rc.canBuildRobot(type, dir)) {
             rc.buildRobot(type, dir);
-            if (rc.getCooldownTurns() >= 1) {
+            while (rc.getCooldownTurns() >= 1) {
                 rp.endTurn();
             }
             return true;

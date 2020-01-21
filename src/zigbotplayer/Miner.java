@@ -132,16 +132,13 @@ public class Miner extends RobotPlayer {
         int foeDroneCount = 0;
         int netGunCount = 0;
         for (RobotInfo ri : rc.senseNearbyRobots()) {
-            // we stop using the HQ as a refinery eventually
-            if (ri.type == RobotType.DELIVERY_DRONE && ri.team == ri.getTeam().opponent()) {
+            if (ri.type == RobotType.DELIVERY_DRONE && ri.team == rc.getTeam().opponent()) {
                 foeDroneCount++;
-            } else if (ri.type == RobotType.NET_GUN && ri.team == ri.getTeam()) {
+            } else if (ri.type == RobotType.NET_GUN && ri.team == rc.getTeam()) {
                 netGunCount++;
             }
         }
-        System.out.println("NET: " + netGunCount + " DRONE: " + foeDroneCount);
-        if (netGunCount * 2 - foeDroneCount < 0) {
-            System.out.println("BUILD NET GUN!");
+        if (netGunCount * 3 - foeDroneCount < 0) {
             BuildUnits.considerBuild(this, RobotType.NET_GUN);
         }
     }
@@ -157,12 +154,12 @@ public class Miner extends RobotPlayer {
                 m.step();
             }
         }
-        BuildUnits.considerBuild(this, RobotType.FULFILLMENT_CENTER);
         if ((refinery == null || box(nearestRefinery(), rc.getLocation()) >= 4) && soup != null && box(soup, rc.getLocation()) < 2) {
             BuildUnits.considerBuild(this, RobotType.REFINERY);
             nearestRefinery(); // update nearest refinery
         }
         BuildUnits.considerBuild(this, RobotType.DESIGN_SCHOOL);
+        BuildUnits.considerBuild(this, RobotType.FULFILLMENT_CENTER);
         chooseMove();
         if (!mined && soup != null) {
             while (tryMine(rc.getLocation().directionTo(soup))) ;
