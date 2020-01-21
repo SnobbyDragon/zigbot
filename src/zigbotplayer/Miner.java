@@ -8,7 +8,9 @@ import battlecode.common.*;
 // It it can't move in the general direction it wants to go, it will wander in a random direction
 // for a while.
 public class Miner extends RobotPlayer {
-    boolean mined = false;
+    private boolean mined() {
+        return rc.getSoupCarrying() == RobotType.MINER.soupLimit;
+    }
 
     /**
      * Goals of the miner
@@ -82,6 +84,13 @@ public class Miner extends RobotPlayer {
         }
         if (nearRef != null) {
             refinery = nearRef;
+        } else {
+            if (soup != null && box(soup, rc.getLocation()) < 2) {
+                MapLocation ml = BuildUnits.considerBuild(this, RobotType.REFINERY);
+                if (ml != null) {
+                    refinery = ml;
+                }
+            }
         }
         return refinery;
     }
@@ -90,34 +99,37 @@ public class Miner extends RobotPlayer {
      * @throws GameActionException
      */
     void updateGoal() throws GameActionException {
+        thinkAboutBuildingStuff();
         MapLocation goal = soup;
-        if (mined) {
+        System.out.println("MINED? " + mined());
+        if (mined()) {
             goal = nearestRefinery();
         } else {
             for (MapLocation ml : inSight()) {
-                if (rc.canSenseLocation(ml) && rc.senseSoup(ml) > 0 && rc.senseRobotAtLocation(ml) == null) {
+                if (rc.canSenseLocation(ml) && rc.senseSoup(ml) > 0 && rc.senseRobotAtLocation(ml) == null
+                        && (rc.getRoundNum() < HQ_WALL_PHASE || box(HQLocation, ml) >= 3)) {
                     goal = ml;
                     soup = goal;
+                    System.out.println("Found nice soup");
                     break;
                 }
             }
+            System.out.println("Found no soup");
         }
-        if (goal != null) {
-            if (mined) {
-                g = Goal.Refine;
-            } else {
-                g = Goal.Mine;
-            }
+        if (mined()) {
+            g = Goal.Refine;
+        } else {
+            g = Goal.Mine;
         }
-        System.out.println("Set goal to " + goal);
+        printGoal();
         movement = new Movement(this, goal, 1);
     }
 
     void printGoal() {
         if (g == Goal.Refine) {
-            System.out.println("Goal: " + g + ", at: " + refinery + " Robot at " + movement.destination);
+            System.out.println("Goal: " + g + ", at: " + refinery);
         } else if (g == Goal.Mine) {
-            System.out.println("Goal: " + g + ", at: " + soup + " Robot at " + movement.destination);
+            System.out.println("Goal: " + g + ", at: " + soup);
         }
     }
 
@@ -136,6 +148,11 @@ public class Miner extends RobotPlayer {
         }
     }
 
+    private void thinkAboutBuildingStuff() {
+        BuildUnits.considerBuild(this, RobotType.DESIGN_SCHOOL);
+        BuildUnits.considerBuild(this, RobotType.FULFILLMENT_CENTER);
+    }
+
     void minerTurn() throws GameActionException {
         if (rc.getRoundNum() > HQ_WALL_PHASE && box(HQLocation, rc.getLocation()) < 3) {
             if (refinery == HQLocation) {
@@ -147,26 +164,21 @@ public class Miner extends RobotPlayer {
                 m.step();
             }
         }
-        if ((refinery == null || box(nearestRefinery(), rc.getLocation()) >= 4) && soup != null && box(soup, rc.getLocation()) < 2) {
-            BuildUnits.considerBuild(this, RobotType.REFINERY);
-            nearestRefinery(); // update nearest refinery
-        }
-        BuildUnits.considerBuild(this, RobotType.DESIGN_SCHOOL);
-        BuildUnits.considerBuild(this, RobotType.FULFILLMENT_CENTER);
+        thinkAboutBuildingStuff();
         chooseMove();
-        if (!mined && soup != null) {
+        if (!mined() && soup != null) {
             while (tryMine(rc.getLocation().directionTo(soup))) ;
         } else if (refinery != null) {
             while (tryRefine(rc.getLocation().directionTo(refinery))) ;
         }
         //reset goals if the location we were supposed to go to is gone
-        if (g == Goal.Refine && refinery != null && rc.canSenseLocation(refinery) &&
+        if (refinery != null && rc.canSenseLocation(refinery) &&
                 rc.senseRobotAtLocation(refinery).type != RobotType.REFINERY) {
             refinery = null;
-        } else if (g == Goal.Mine && soup != null && rc.canSenseLocation(soup) && rc.senseSoup(soup) == 0) {
+        } else if (soup != null && (rc.canSenseLocation(soup) && rc.senseSoup(soup) == 0 ||
+                (rc.getRoundNum() < HQ_WALL_PHASE || box(HQLocation, rc.getLocation()) < 3))) {
             soup = null;
         }
-        mined = rc.getSoupCarrying() == RobotType.MINER.soupLimit;
         updateGoal();
     }
 

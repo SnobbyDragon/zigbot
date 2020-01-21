@@ -79,11 +79,17 @@ public class Movement {
 
     Set<MapLocation> seen = new HashSet<>();
 
+
+    int timeSpent = 0;
     /*
      * Direction a robot should move in to go to a destination.
      */
     public StepResult step() throws GameActionException {
         seen.add(rc.getLocation());
+        timeSpent++;
+        if(timeSpent > 30){
+            return StepResult.STUCK;
+        }
         if (destination == null) {
             return randomMove();
         }
@@ -132,20 +138,17 @@ public class Movement {
         return stepAvoidingSeen(exploreDir);
     }
 
-    int fails = 0;
+
     private StepResult stepAvoidingSeen(Direction exploreDir) throws GameActionException {
         for (Direction d : Movement.directionsOf(exploreDir)) {
             if (!seen.contains(rc.getLocation().add(d)) && tryMove(d)) {
                 return StepResult.MOVED;
             }
         }
-        fails++;
-        if(fails < 4) {
-            for (Direction d : Movement.directionsOf(exploreDir)) {
-                //maybe we got trapped in locations we've been to, but there is still a path
-                if (tryMove(d)) {
-                    return StepResult.MOVED;
-                }
+        for (Direction d : Movement.directionsOf(exploreDir)) {
+            //maybe we got trapped in locations we've been to, but there is still a path
+            if (tryMove(d)) {
+                return StepResult.MOVED;
             }
         }
         return StepResult.STUCK;

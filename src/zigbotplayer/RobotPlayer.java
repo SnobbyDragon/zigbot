@@ -9,7 +9,7 @@ public strictfp class RobotPlayer {
     public static RobotController rc;
 
     // phase where miners go away from HQ and let landscapers build
-    static final int HQ_WALL_PHASE = 140;
+    static final int HQ_WALL_PHASE = 150;
 
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;
@@ -164,6 +164,8 @@ public strictfp class RobotPlayer {
                         }
                     } else if (msg[1] == 3) {
                         fullfillmentCenters++;
+                    } else if(msg[1] == 4){
+                        landscapers++;
                     }
                 }
             }

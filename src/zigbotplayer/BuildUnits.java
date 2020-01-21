@@ -20,31 +20,30 @@ public final class BuildUnits {
         int soup = rc.getTeamSoup();
         switch (toBuild) {
             case DESIGN_SCHOOL:
-                if (soup < 100 + 500 * builder.designSchools) {
+                if (soup < 280 + 500 * builder.designSchools) {
                     return null; // there is not a lot of soup and a lot of schools already
                 }
                 break;
             case MINER:
-                if (soup < 40 + builder.miners * 40) {// build miners when there is soup excess
+                if (soup < 70 + builder.miners * 40) {// build miners when there is soup excess
                     return null;
                 }
                 break;
             case LANDSCAPER:
-                if (soup < Math.min(300, builder.landscapers * 50)) {
+                if (soup < Math.min(300, builder.landscapers * 100)) {
                     return null;
                 }
                 break;
             case DELIVERY_DRONE:
-                if (soup < builder.drones * 100) {
+                if (soup < builder.drones * 140) {
                     return null;
                 }
                 break;
             case FULFILLMENT_CENTER:
-                return null;//fullfillment centers and drones suck
-                /*
-                if (soup < 160 + builder.fullfillmentCenters * 600) {
+                // donly build drones if we are doing pretty well on resources.
+                if (builder.landscapers < 5 + Math.random()*5 || soup < 160 + builder.fullfillmentCenters * 600) {
                     return null;
-                }*/
+                }
             default:
                 break;
         }
@@ -79,7 +78,7 @@ public final class BuildUnits {
                         builder.submitMessage(8, new int[]{3, 0, 0, 0, 0, 0});
                         break;
                     case LANDSCAPER:
-                        builder.landscapers++;
+                        builder.submitMessage(1, new int[]{4, 0, 0, 0, 0, 0});
                         break;
                     case MINER:
                         builder.miners++;

@@ -11,7 +11,7 @@ public class DeliveryDrone extends RobotPlayer {
         if (!rc.isCurrentlyHoldingUnit()) {
             // See if there are any enemy robots within striking range (distance 1 from lumberjack's radius)
             for (RobotInfo robot : rc.senseNearbyRobots(GameConstants.DELIVERY_DRONE_PICKUP_RADIUS_SQUARED)) {
-                if (box(robot.location, HQLocation) == 1) {//just keep them away from our HQ plz
+                if (box(robot.location, HQLocation) == 1 && robot.type!=RobotType.DELIVERY_DRONE) {//just keep them away from our HQ plz
                     rc.pickUpUnit(robot.getID());
                     held = robot;
                 }
@@ -30,14 +30,16 @@ public class DeliveryDrone extends RobotPlayer {
                 m.step();
             }
             held = null;
-            m = new Movement(this, HQLocation, 3);
+            m = new Movement(this, HQLocation, 0);
         }
-        m.step();
+        if(m.step()!= Movement.StepResult.MOVED){
+            m = new Movement(this, HQLocation, 0);
+        }
     }
 
     public void runUnit() throws GameActionException {
         updateFromMessages();
-        m= new Movement(this, HQLocation, 3);
+        m= new Movement(this, HQLocation, 0);
         while (true) {
             endTurn();
             droneTurn();
