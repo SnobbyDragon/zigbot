@@ -22,7 +22,6 @@ public class Miner extends RobotPlayer {
     ;
     Movement movement = new Movement(this);
     Goal g = Goal.None;
-    int exploreRounds = 0;
 
     /**
      * Location of the refinery to deliver soup.
@@ -48,12 +47,8 @@ public class Miner extends RobotPlayer {
      * @throws GameActionException
      */
     void chooseMove() throws GameActionException {
-        if (movement == null || g == Goal.None || (g == Goal.Explore && exploreRounds <= 0)) {
+        if (g == Goal.None) {
             updateGoal();
-            printGoal();
-        }
-        if (g == Goal.None || g == Goal.Explore) {
-            exploreRounds--;
             movement.step();
         }
         Movement.StepResult sr = movement.step();
@@ -61,9 +56,7 @@ public class Miner extends RobotPlayer {
         if (sr != Movement.StepResult.DONE) {
             if (sr == Movement.StepResult.STUCK) {
                 movement = new Movement(this);
-                g = Goal.Explore;
-                exploreRounds = 5 + (int) (Math.random() * 4);
-                System.out.println("EXPLORE FOR  " + exploreRounds);
+                System.out.println("EXPLORE TIME");
             }
         }
     }
