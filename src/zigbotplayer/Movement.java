@@ -5,6 +5,11 @@ import battlecode.common.GameActionException;
 import battlecode.common.MapLocation;
 import battlecode.common.RobotController;
 
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
+
 import static zigbotplayer.RobotPlayer.MAP_HEIGHT;
 import static zigbotplayer.RobotPlayer.MAP_WIDTH;
 
@@ -26,7 +31,6 @@ public class Movement {
 
     Direction exploreDir;
     int requiredDistance;
-    ;
 
     /*
      * Create new instance of movement class with no real goal, just go somewhere far.
@@ -44,6 +48,11 @@ public class Movement {
         rp = you;
         rc = RobotPlayer.rc;
         exploreDir = direction;
+        /*
+        destination = you.rc.getLocation();
+        for(int i = 0; i < 30; i++){
+            destination.add(direction);
+        }*/
     }
 
     /*
@@ -68,10 +77,13 @@ public class Movement {
 
     ;
 
+    Set<MapLocation> seen = new HashSet<>();
+
     /*
      * Direction a robot should move in to go to a destination.
      */
     public StepResult step() throws GameActionException {
+        seen.add(rc.getLocation());
         if (destination == null) {
             return randomMove();
         }
@@ -79,11 +91,18 @@ public class Movement {
         if (rp.taxicab(rc.getLocation(), destination) <= requiredDistance) {
             return StepResult.DONE;
         }
-        for (Direction d : Movement.generalDirectionOf(dir)) {
+        for (Direction d : Movement.directionsOf(dir)) {
+            if (!seen.contains(rc.getLocation().add(d)) && tryMove(d)) {
+                return StepResult.MOVED;
+            }
+        }
+        for(Direction d: Movement.directionsOf(dir)){
+            //maybe we got trapped in locations we've been to, but there is still a path
             if (tryMove(d)) {
                 return StepResult.MOVED;
             }
         }
+        // not good to reach here...
         return StepResult.STUCK;
     }
 
@@ -122,7 +141,13 @@ public class Movement {
         if (exploreDir == null) {
             exploreDir = randomDirection();
         }
-        for (Direction d : generalDirectionOf(exploreDir)) {
+        for (Direction d : Movement.directionsOf(exploreDir)) {
+            if (!seen.contains(rc.getLocation().add(d)) && tryMove(d)) {
+                return StepResult.MOVED;
+            }
+        }
+        for(Direction d: Movement.directionsOf(exploreDir)){
+            //maybe we got trapped in locations we've been to, but there is still a path
             if (tryMove(d)) {
                 return StepResult.MOVED;
             }
@@ -185,6 +210,21 @@ public class Movement {
             }
         }
         throw new RuntimeException("Direction Index not found in list");
+    }
+
+    /**
+     * Returns directions in order of how much they tend to be in the given
+     * direction
+     *
+     * @param d the given direction
+     * @return an array of 8 directions
+     */
+    static Direction[] directionsOf(Direction d) {
+        int ind = indInDirList(d);
+        return new Direction[]{d, directions[(ind + 1) % 8], directions[(ind + 7) % 8],
+                directions[(ind + 2) % 8], directions[(ind + 6) % 8],
+                directions[(ind + 3) % 8], directions[(ind + 5) % 8],
+                directions[(ind + 4) % 8]};
     }
 
     /**

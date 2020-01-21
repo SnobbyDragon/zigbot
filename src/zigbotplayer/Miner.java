@@ -133,13 +133,10 @@ public class Miner extends RobotPlayer {
                 refinery = null;
             }
             //stay away from HQ and let landscapers do their thing
-            System.out.println("TOO CLOSE TO HQ");
             Movement m = new Movement(this, HQLocation.directionTo(rc.getLocation()));
             while (box(HQLocation, rc.getLocation()) < 3) {
                 m.step();
-                System.out.println(box(HQLocation, rc.getLocation()));
             }
-            System.out.println("OK NOW");
         }
         if ((refinery == null || box(nearestRefinery(), rc.getLocation()) >= 4) && soup != null && box(soup, rc.getLocation()) < 2) {
             BuildUnits.considerBuild(this, RobotType.REFINERY);

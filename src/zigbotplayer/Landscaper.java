@@ -24,11 +24,11 @@ public class Landscaper extends RobotPlayer {
     boolean onStandSite = false;
 
 
-    void filterOutOfBounds(List<MapLocation> l){
-        for(int i = 0; i < l.size(); i++){
+    void filterOutOfBounds(List<MapLocation> l) {
+        for (int i = 0; i < l.size(); i++) {
             MapLocation ml = l.get(i);
-            if(ml.x < 0 || ml.x >= rc.getMapWidth() ||
-                    ml.y < 0 || ml.y >= rc.getMapHeight()){
+            if (ml.x < 0 || ml.x >= rc.getMapWidth() ||
+                    ml.y < 0 || ml.y >= rc.getMapHeight()) {
                 l.remove(i--);
             }
         }
@@ -36,7 +36,9 @@ public class Landscaper extends RobotPlayer {
 
     void updateHQLoc() {
         System.out.println("UPDATED YAY");
-        for (Direction d : Movement.directions) {
+        Direction[] dirs = Movement.directions;
+        for (int i = dirs.length; i != 0; i = (i+5)%dirs.length) {
+            Direction d = dirs[i % dirs.length];
             depositSites.add(HQLocation.add(d));
             digSites.add(HQLocation.add(d).add(d));
             standSites.add(HQLocation.add(d).add(d.rotateLeft()));
@@ -53,7 +55,9 @@ public class Landscaper extends RobotPlayer {
      * Refill = go somewhere and dig more dirt
      * Deposit = go somewhere and deposit dirt
      */
-    enum Goal {None, Refill, Deposit};
+    enum Goal {None, Refill, Deposit}
+
+    ;
 
 
     /**
@@ -129,7 +133,7 @@ public class Landscaper extends RobotPlayer {
                 break;
             }
         }
-        if (digSite!=null) { // If adjacent to digSite, dig from it!
+        if (digSite != null) { // If adjacent to digSite, dig from it!
             tryDigDirt(rc.getLocation().directionTo(digSite));
             return true;
         } else { // If not adjacent to digSite, move toward it

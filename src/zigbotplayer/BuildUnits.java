@@ -25,17 +25,17 @@ public final class BuildUnits {
                 }
                 break;
             case MINER:
-                if (soup < builder.miners * 50) {// build miners when there is soup excess
+                if (soup < Math.min(300, builder.miners * 40)) {// build miners when there is soup excess
                     return null;
                 }
                 break;
             case LANDSCAPER:
-                if (soup < builder.landscapers * 200) {
+                if (soup < Math.min(300, builder.landscapers * 200)) {
                     return null;
                 }
                 break;
             case DELIVERY_DRONE:
-                if(soup < builder.drones * 300){
+                if (soup < builder.drones * 300) {
                     return null;
                 }
             default:
@@ -51,6 +51,11 @@ public final class BuildUnits {
 
     public static MapLocation build(RobotPlayer builder, RobotType toBuild) throws GameActionException {
         for (Direction d : Movement.directions) {
+            if ((toBuild == RobotType.DESIGN_SCHOOL || toBuild == RobotType.NET_GUN ||
+                    toBuild == RobotType.FULFILLMENT_CENTER)
+                    && RobotPlayer.HQLocation != null && builder.box(builder.rc.getLocation().add(d), RobotPlayer.HQLocation) < 3) {
+                continue;
+            }
             if (tryBuild(builder, toBuild, d)) {
                 switch (toBuild) {
                     case DESIGN_SCHOOL:
