@@ -20,7 +20,7 @@ public class Miner extends RobotPlayer {
     enum Goal {None, Refine, Mine, Explore}
 
     ;
-    Movement movement = new Movement(this, null);
+    Movement movement = new Movement(this);
     Goal g = Goal.None;
     int exploreRounds = 0;
 
@@ -43,24 +43,6 @@ public class Miner extends RobotPlayer {
     }
 
     /**
-     * Tries to move in the given general direction
-     *
-     * @param d the given direction
-     * @return whether the miner can move towards the given direction
-     * @throws GameActionException
-     */
-    boolean generalMove(Direction d) throws GameActionException {
-        Direction[] genDirs = Movement.generalDirectionOf(d);
-        int rand = (int) (Math.random() * genDirs.length);
-        for (int i = 0; i < genDirs.length; i++) {
-            if (new Movement(this, null).tryMove(genDirs[(i + rand) % genDirs.length])) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    /**
      * Moves in a direction depending on goal.
      *
      * @throws GameActionException
@@ -77,7 +59,7 @@ public class Miner extends RobotPlayer {
         Movement.StepResult sr = movement.step();
         if (sr != Movement.StepResult.DONE) {
             if (sr == Movement.StepResult.STUCK) {
-                movement = new Movement(this, null);
+                movement = new Movement(this);
                 g = Goal.Explore;
                 exploreRounds = 1 + (int) (Math.random() * 4);
                 System.out.println("EXPLORE FOR  " + exploreRounds);
@@ -95,7 +77,8 @@ public class Miner extends RobotPlayer {
         MapLocation nearRef = null;
         int minD = 100000;
         for (RobotInfo ri : rc.senseNearbyRobots(-1, rc.getTeam())) {
-            if (((ri.type == RobotType.HQ || ri.type == RobotType.REFINERY))) {
+            // we stop using the HQ as a refinery eventually
+            if ((((ri.type == RobotType.HQ && rc.getRoundNum() < HQ_WALL_PHASE) || ri.type == RobotType.REFINERY))) {
                 int d = box(ri.location, robot);
                 if (d < minD) {
                     nearRef = ri.location;
@@ -118,7 +101,7 @@ public class Miner extends RobotPlayer {
             goal = nearestRefinery();
         } else {
             for (MapLocation ml : inSight()) {
-                if (rc.senseSoup(ml) > 0) {
+                if (rc.canSenseLocation(ml) && rc.senseSoup(ml) > 0 && rc.senseRobotAtLocation(ml) == null) {
                     goal = ml;
                     soup = goal;
                     break;
@@ -133,7 +116,7 @@ public class Miner extends RobotPlayer {
             }
         }
         System.out.println("Set goal to " + goal);
-        movement = new Movement(this, goal);
+        movement = new Movement(this, goal, 1);
     }
 
     void printGoal() {
@@ -145,27 +128,33 @@ public class Miner extends RobotPlayer {
     }
 
     void minerTurn() throws GameActionException {
-        BuildUnits.considerBuild(this, RobotType.DESIGN_SCHOOL);
-        if (refinery != null && box(nearestRefinery(), rc.getLocation()) >= 6 && box(soup, rc.getLocation()) < 2) {
-            BuildUnits.considerBuild(this, RobotType.REFINERY);
+        if (rc.getRoundNum() > HQ_WALL_PHASE && box(HQLocation, rc.getLocation()) < 3) {
+            if (refinery == HQLocation) {
+                refinery = null;
+            }
+            //stay away from HQ and let landscapers do their thing
+            System.out.println("TOO CLOSE TO HQ");
+            Movement m = new Movement(this, HQLocation.directionTo(rc.getLocation()));
+            while (box(HQLocation, rc.getLocation()) < 3) {
+                m.step();
+                System.out.println(box(HQLocation, rc.getLocation()));
+            }
+            System.out.println("OK NOW");
         }
+        if ((refinery == null || box(nearestRefinery(), rc.getLocation()) >= 4) && soup != null && box(soup, rc.getLocation()) < 2) {
+            BuildUnits.considerBuild(this, RobotType.REFINERY);
+            nearestRefinery(); // update nearest refinery
+        }
+        BuildUnits.considerBuild(this, RobotType.DESIGN_SCHOOL);
         chooseMove();
-        if (!mined) {
-            for (Direction dir : Movement.directions) {
-                while (tryMine(dir)) {
-                    return;
-                }
-            }
-        } else {
-            for (Direction dir : Movement.directions) {
-                if (tryRefine(dir)) {
-                    return;
-                }
-            }
+        if (!mined && soup != null) {
+            while (tryMine(rc.getLocation().directionTo(soup)));
+        } else if (refinery != null) {
+            while (tryRefine(rc.getLocation().directionTo(refinery)));
         }
         //reset goals if the location we were supposed to go to is gone
         if (g == Goal.Refine && taxicab(rc.getLocation(), refinery) == 0) {
-            refinery = HQLocation;
+            refinery = null;
         } else if (g == Goal.Mine && taxicab(rc.getLocation(), soup) == 0) {
             soup = null;
         }

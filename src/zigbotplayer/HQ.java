@@ -7,7 +7,9 @@ import java.util.Arrays;
 public class HQ extends RobotPlayer {
 
     void HQTurn() throws GameActionException {
-        BuildUnits.considerBuild(this, RobotType.MINER);
+        if(rc.getRoundNum() < HQ_WALL_PHASE) {
+            BuildUnits.considerBuild(this, RobotType.MINER);
+        }
         // todo: shoot lazorz
     }
 

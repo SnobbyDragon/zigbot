@@ -7,7 +7,7 @@ import battlecode.common.Team;
 
 public class DeliveryDrone extends RobotPlayer {
 
-    Movement m = new Movement(this, null);
+    Movement m = new Movement(this);
     public void droneTurn() throws GameActionException {
         Team enemy = rc.getTeam().opponent();
         if (!rc.isCurrentlyHoldingUnit()) {

@@ -18,15 +18,32 @@ public class Landscaper extends RobotPlayer {
 
     // These coordinates are completely arbitrary
     // Ultimately, we will select these coordinates intelligently so our robot builds a wall
-    List<MapLocation> depositSites = new ArrayList<MapLocation>();
-    List<MapLocation> digSites = new ArrayList<MapLocation>();
+    List<MapLocation> depositSites = new ArrayList<>();
+    List<MapLocation> digSites = new ArrayList<>();
+    List<MapLocation> standSites = new ArrayList<>();
+    boolean onStandSite = false;
+
+
+    void filterOutOfBounds(List<MapLocation> l){
+        for(int i = 0; i < l.size(); i++){
+            MapLocation ml = l.get(i);
+            if(ml.x < 0 || ml.x >= rc.getMapWidth() ||
+                    ml.y < 0 || ml.y >= rc.getMapHeight()){
+                l.remove(i--);
+            }
+        }
+    }
 
     void updateHQLoc() {
         System.out.println("UPDATED YAY");
         for (Direction d : Movement.directions) {
             depositSites.add(HQLocation.add(d));
             digSites.add(HQLocation.add(d).add(d));
+            standSites.add(HQLocation.add(d).add(d.rotateLeft()));
         }
+        filterOutOfBounds(depositSites);
+        filterOutOfBounds(digSites);
+        filterOutOfBounds(standSites);
     }
 
     /*
@@ -36,9 +53,7 @@ public class Landscaper extends RobotPlayer {
      * Refill = go somewhere and dig more dirt
      * Deposit = go somewhere and deposit dirt
      */
-    enum Goal {None, Refill, Deposit}
-
-    ;
+    enum Goal {None, Refill, Deposit};
 
 
     /**
@@ -50,6 +65,12 @@ public class Landscaper extends RobotPlayer {
      * @throws GameActionException
      */
     public void landscaperTurn() throws GameActionException {
+        // STEP ZERO: Go to a standing site!
+        if (!onStandSite) {
+            System.out.println("GOING TO FIND A PLACE TO STAND");
+            goToStandSite();
+            System.out.println("FOUND IT");
+        }
         // STEP ONE: Decide what the goal should be
         if (rc.getDirtCarrying() == RobotType.LANDSCAPER.dirtLimit) { // if full
             currentGoal = Goal.Deposit;
@@ -70,26 +91,51 @@ public class Landscaper extends RobotPlayer {
         System.out.println("I reached the end of the landscaperTurn subroutine");
     }
 
+    public void goToStandSite() throws GameActionException {
+        Movement m = new Movement(this, HQLocation, 3);
+        Movement.StepResult sr = m.step();
+        while (sr != Movement.StepResult.DONE) {
+            sr = m.step();
+        }
+        System.out.println("NEAR HQ.");
+        while (true) {
+            for (MapLocation ss : standSites) {
+                if (rc.canSenseLocation(ss) && rc.getLocation().isWithinDistanceSquared(ss, RobotType.LANDSCAPER.sensorRadiusSquared)
+                        && rc.senseRobotAtLocation(ss) == null) {
+                    m = new Movement(this, ss, 0);
+                    sr = m.step();
+                    while (sr == Movement.StepResult.MOVED) {
+                        sr = m.step();
+                    }
+                    if (sr == Movement.StepResult.DONE) {
+                        onStandSite = true;
+                        return;
+                    }
+                    assert sr == Movement.StepResult.STUCK;
+                }
+            }
+        }
+    }
+
     /*
      * Try to fill the robot up with dirt from location digSite
      */
     boolean executeRefillMode() throws GameActionException {
-        MapLocation digSite = digSites.get(0);
-        int minDist = box(digSites.get(0), rc.getLocation());
+        MapLocation digSite = null;
         for (int i = 0; i < digSites.size(); i++) {
-            int d= box(digSites.get(i), rc.getLocation());
-            if (d< minDist && 0 < d) {
+            int d = box(digSites.get(i), rc.getLocation());
+            if (d == 1) {
                 digSite = digSites.get(i);
+                break;
             }
         }
-        if (minDist==1) { // If adjacent to digSite, dig from it!
+        if (digSite!=null) { // If adjacent to digSite, dig from it!
             tryDigDirt(rc.getLocation().directionTo(digSite));
+            return true;
         } else { // If not adjacent to digSite, move toward it
-            Movement movement = new Movement(this, digSite); // set the destination to move toward
-            movement.step();
-            System.out.println("I am a landscaper and I just tried to take a step");
+            onStandSite = false;
+            return false;
         }
-        return true;
 
     }
 
@@ -98,22 +144,24 @@ public class Landscaper extends RobotPlayer {
      */
     boolean executeDepositMode() throws GameActionException {
         System.out.println("I am executing deposit mode");
-        MapLocation depositSite = depositSites.get(0);
-        int minDist = box(depositSites.get(0), rc.getLocation());
+        MapLocation depositSite = null;
+        int minH = 99999;
         for (int i = 0; i < depositSites.size(); i++) {
-            int d= box(depositSites.get(i), rc.getLocation());
-            if (d< minDist && 0 < d) {
-                depositSite = depositSites.get(i);
+            int d = box(depositSites.get(i), rc.getLocation());
+            if (d == 1) {
+                if (depositSite == null || rc.senseElevation(depositSites.get(i)) < minH) {
+                    depositSite = depositSites.get(i);
+                    minH = rc.senseElevation(depositSite);
+                }
             }
         }
-        if (minDist == 1) { // If adjacent to digSite, dig from it!
-            // TODO
+        if (depositSite != null) { // If adjacent to digSite, dig from it!
             tryDepositDirt(rc.getLocation().directionTo(depositSite));
+            return true;
         } else { // If not adjacent to digSite, move toward it
-            Movement movement = new Movement(this, depositSite); // set the destination to move in
-            movement.step();
+            onStandSite = false;
+            return false;
         }
-        return true;
     }
 
     public void runUnit() throws GameActionException {
@@ -125,8 +173,9 @@ public class Landscaper extends RobotPlayer {
 
     /**
      * Deposit one unit of dirt in the given direction IFF it is possible
+     * <p>
+     * Direction dir = the direction in which you want to deposit dirt
      *
-     * @param Direction dir = the direction in which you want to deposit dirt
      * @return true if the dirt is deposited, false otherwise
      * @author chris
      */
@@ -141,8 +190,9 @@ public class Landscaper extends RobotPlayer {
 
     /**
      * Dig one unit dirt from given direction IFF it is possible
+     * <p>
+     * Direction dir = direction from which to dig
      *
-     * @param Direction dir = direction from which to dig
      * @return true if dirt was dug, false otherwise
      * @author chris
      */

@@ -24,38 +24,63 @@ public class Movement {
     // Where the robot wants to go
     public MapLocation destination;
 
+    Direction exploreDir;
+    int requiredDistance;
+    ;
+
     /*
-     * Create new instance of movement class. If dest = null, assumes that movement
-     * will be in some randomish direction.
+     * Create new instance of movement class with no real goal, just go somewhere far.
      */
-    public Movement(RobotPlayer you, MapLocation dest){
+    public Movement(RobotPlayer you) {
+        rp = you;
+        rc = RobotPlayer.rc;
+    }
+
+    /*
+     * Create new instance of movement class, the robot will generally
+     * go in the given direction.
+     */
+    public Movement(RobotPlayer you, Direction direction) {
+        rp = you;
+        rc = RobotPlayer.rc;
+        exploreDir = direction;
+    }
+
+    /*
+     * Create new instance of movement class with a destination. Also set dist: to the number of squares away
+     * from your location you are ok with being (taxicab distance)
+     */
+    public Movement(RobotPlayer you, MapLocation dest, int dist) {
         rp = you;
         rc = RobotPlayer.rc;
         destination = dest;
+        requiredDistance = dist;
     }
 
     /*
      * Update the location you wish to go to
      */
-    public void updateDest(MapLocation newDest){
+    public void updateDest(MapLocation newDest) {
         destination = newDest;
     }
 
-    public enum StepResult {MOVED, STUCK, DONE};
+    public enum StepResult {MOVED, STUCK, DONE}
+
+    ;
 
     /*
      * Direction a robot should move in to go to a destination.
      */
     public StepResult step() throws GameActionException {
-        if(destination==null){
+        if (destination == null) {
             return randomMove();
         }
         Direction dir = rc.getLocation().directionTo(destination);
-        if(dir == Direction.CENTER){
+        if (rp.taxicab(rc.getLocation(), destination) <= requiredDistance) {
             return StepResult.DONE;
         }
         for (Direction d : Movement.generalDirectionOf(dir)) {
-            if(tryMove(d)) {
+            if (tryMove(d)) {
                 return StepResult.MOVED;
             }
         }
@@ -65,6 +90,7 @@ public class Movement {
     /**
      * Chooses a direction to explore based on map edges, water, elevation, nearby units
      * TODO
+     *
      * @return a direction to explore
      */
     Direction pickExploreDirection() {
@@ -91,18 +117,19 @@ public class Movement {
         //not near edge of map, no nearby robots
         return this.randomDirection();
     }
-    Direction exploreDir;
+
     public StepResult randomMove() throws GameActionException {
-        if(exploreDir == null){
+        if (exploreDir == null) {
             exploreDir = randomDirection();
         }
-        for(Direction d : generalDirectionOf(exploreDir)){
-            if(tryMove(d)){
+        for (Direction d : generalDirectionOf(exploreDir)) {
+            if (tryMove(d)) {
                 return StepResult.MOVED;
             }
         }
         return StepResult.STUCK;
     }
+
     /**
      * An array of all directions excluding CENTER in
      * clockwise order
@@ -133,11 +160,9 @@ public class Movement {
      * @throws GameActionException
      */
     boolean tryMove(Direction dir) throws GameActionException {
-        while(!rc.isReady()){
-            System.out.println("Was not ready to move, so waited first");
+        while (!rc.isReady()) {
             rp.endTurn();
         }
-        System.out.println("I am trying to move " + dir + "; " + rc.isReady() + " " + rc.getCooldownTurns() + " " + rc.canMove(dir));
         if (rc.canMove(dir) && !rc.senseFlooding(rc.getLocation().add(dir))) {
             rc.move(dir);
             if (rc.getCooldownTurns() >= 1) {

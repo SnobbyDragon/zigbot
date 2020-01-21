@@ -8,6 +8,9 @@ import java.util.*;
 public strictfp class RobotPlayer {
     public static RobotController rc;
 
+    // phase where miners go away from HQ and let landscapers build
+    static final int HQ_WALL_PHASE = 200;
+
     static int TEAM_HASH;
     static int MAP_HEIGHT, MAP_WIDTH;
 
@@ -49,7 +52,7 @@ public strictfp class RobotPlayer {
      * @return the minimum moves between a and b
      */
     int box(MapLocation a, MapLocation b) {
-        return Math.max(a.x - b.x, a.y - b.y);
+        return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
     }
 
     /**
