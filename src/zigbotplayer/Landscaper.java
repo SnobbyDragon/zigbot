@@ -7,13 +7,12 @@ import battlecode.common.RobotType;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class Landscaper extends RobotPlayer {
 
     Goal currentGoal = Goal.None; // initialization
     // amount of evenness of distribution this landscaper wants
-    double ADHD = Math.random() * 30 + 10;
+    double ADHD = Math.random() * 30 - 20;
 
     // These coordinates are completely arbitrary
     // Ultimately, we will select these coordinates intelligently so our robot builds a wall
@@ -38,8 +37,9 @@ public class Landscaper extends RobotPlayer {
         for (Direction d : Movement.directions) {
             depositSites.add(HQLocation.add(d));
             // we want the stand sites to be more evenly spread
+            standSites.add(HQLocation.subtract(d));
             standSites.add(HQLocation.add(d).add(d));
-            standSites.add(HQLocation.subtract(d).subtract(d.rotateLeft()));
+            digSites.add(HQLocation.add(d).add(d.rotateLeft()));
             digSites.add(HQLocation.add(d).add(d).add(d.rotateLeft()));
             digSites.add(HQLocation.add(d).add(d).add(d));
             digSites.add(HQLocation.add(d).add(d).add(d.rotateRight()));
@@ -73,6 +73,7 @@ public class Landscaper extends RobotPlayer {
         // STEP ZERO: Go to a standing site!
         if (!onStandSite) {
             goToStandSite();
+            ADHD += 40;
         }
         // STEP ONE: Decide what the goal should be
         if (rc.getDirtCarrying() == RobotType.LANDSCAPER.dirtLimit) { // if full
@@ -107,28 +108,25 @@ public class Landscaper extends RobotPlayer {
                 minLoc = dep;
             }
         }
-        if(minLoc!=null) {
-            if(tryGoToLocation(minLoc.add(HQLocation.directionTo(minLoc)))){return;};
-            if(tryGoToLocation(minLoc.add(HQLocation.directionTo(minLoc).rotateLeft()))){return;};
-            if(tryGoToLocation(minLoc.add(HQLocation.directionTo(minLoc).rotateRight()))){return;};
+        if (minLoc != null) {
+            if (tryGoToLocation(minLoc, 0)) {
+                return;
+            }
         }
         while (true) {
-            for (MapLocation ml : standSites) {
-                tryGoToLocation(ml);
-                if(box(rc.getLocation(), HQLocation)==2){
-                    onStandSite = true;
-                    System.out.println("Happy");
-                    return;
-                }
+            if (tryGoToLocation(HQLocation, 2)) {
+                onStandSite = true;
+                System.out.println("Happy");
             }
         }
     }
 
-    boolean tryGoToLocation(MapLocation ss) throws GameActionException {
+    boolean tryGoToLocation(MapLocation ss, int within) throws GameActionException {
         System.out.println("GOAL " + ss);
-        Movement m = new Movement(this, ss, 0);
+        Movement m = new Movement(this, ss, within);
         Movement.StepResult sr = m.step();
         int occupiedTime = 0;
+        int moves = 0;
         while (sr == Movement.StepResult.MOVED) {
             if (rc.canSenseLocation(ss) && rc.senseRobotAtLocation(ss) != null) {
                 if (occupiedTime > 3) {//robot's been standing here for a while
@@ -137,6 +135,12 @@ public class Landscaper extends RobotPlayer {
                     occupiedTime++;
                 }
             }
+            if (within == 0 || (standSites.contains(rc.getLocation()) && moves > 5)) {
+                onStandSite = true;
+                System.out.println("Happy");
+                return true;
+            }
+            moves++;
             sr = m.step();
         }
         if (sr == Movement.StepResult.DONE) {
@@ -179,15 +183,13 @@ public class Landscaper extends RobotPlayer {
         int worstH = 9999;
         for (int i = 0; i < depositSites.size(); i++) {
             int d = box(depositSites.get(i), rc.getLocation());
-            if(rc.canSenseLocation(depositSites.get(i))) {
+            if (rc.canSenseLocation(depositSites.get(i))) {
                 worstH = Math.min(worstH, rc.senseElevation(depositSites.get(i)));
             }
             if (d == 1) {
                 if (depositSite == null || rc.senseElevation(depositSites.get(i)) < minH) {
                     minH = rc.senseElevation(depositSites.get(i));
-                    if (rc.senseRobotAtLocation(depositSites.get(i)) == null) {
-                        depositSite = depositSites.get(i);
-                    }
+                    depositSite = depositSites.get(i);
                 }
             }
         }
@@ -240,6 +242,5 @@ public class Landscaper extends RobotPlayer {
         } else {
             return false;
         }
-
     }
 }

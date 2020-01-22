@@ -52,7 +52,7 @@ public strictfp class RobotPlayer {
      * @param b another location on the map
      * @return the minimum moves between a and b
      */
-    int box(MapLocation a, MapLocation b) {
+    static int box(MapLocation a, MapLocation b) {
         return Math.max(Math.abs(a.x - b.x), Math.abs(a.y - b.y));
     }
 

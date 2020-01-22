@@ -11,6 +11,8 @@ import static zigbotplayer.RobotPlayer.rc;
  * Build and prioritize unit creation.
  */
 public final class BuildUnits {
+    int toSave = 0;
+
     /*
      * Given a request to build a robot type, determine if it's worth it to act on the request.
      * Returns a location: null if nothing was built, or
@@ -30,25 +32,31 @@ public final class BuildUnits {
                 }
                 break;
             case LANDSCAPER:
-                if (soup < Math.min(300, builder.landscapers * 100)) {
+                if (soup < Math.min(300, builder.landscapers * 100) || builder.landscapers > 15) {
                     return null;
                 }
                 break;
             case DELIVERY_DRONE:
-                if (soup < builder.drones * 140) {
+                if (soup < Math.max(builder.drones * 140,400)) {
                     return null;
                 }
                 break;
             case FULFILLMENT_CENTER:
-                // donly build drones if we are doing pretty well on resources.
-                if (builder.landscapers < 5 + Math.random()*5 || soup < 160 + builder.fullfillmentCenters * 600) {
+                // only build drones if we are doing pretty well on resources.
+                if (builder.landscapers < 5 + Math.random() * 5 || soup < 160 + builder.fullfillmentCenters * 600) {
                     return null;
                 }
             default:
                 break;
         }
+        //save money for a defensive net gun deployment if needed.
+        if (toBuild != RobotType.NET_GUN && toBuild !=RobotType.REFINERY
+                && toBuild.cost + RobotType.NET_GUN.cost > soup && rc.getRoundNum() > 100) {
+            return null;
+        }
         try {
             return build(builder, toBuild);
+
         } catch (GameActionException e) {
             System.out.println("EXCEPTION! Failed to build " + toBuild + e.toString());
             return null;

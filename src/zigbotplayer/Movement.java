@@ -7,8 +7,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import static zigbotplayer.RobotPlayer.MAP_HEIGHT;
-import static zigbotplayer.RobotPlayer.MAP_WIDTH;
+import static zigbotplayer.RobotPlayer.*;
 
 /*
  * A class for movement of all units.
@@ -35,7 +34,6 @@ public class Movement {
     public Movement(RobotPlayer you) {
         rp = you;
         rc = RobotPlayer.rc;
-        System.out.println("Moving to (anywhere)");
     }
 
     /*
@@ -63,7 +61,7 @@ public class Movement {
         rc = RobotPlayer.rc;
         destination = dest;
         requiredDistance = dist;
-        System.out.println("Moving within " + dist + "of" + dest);
+        System.out.println("Moving within " + dist + " of " + dest);
     }
 
     /*
@@ -81,13 +79,16 @@ public class Movement {
 
 
     int timeSpent = 0;
+
     /*
      * Direction a robot should move in to go to a destination.
      */
     public StepResult step() throws GameActionException {
         seen.add(rc.getLocation());
         timeSpent++;
-        if(timeSpent > 30){
+        if (timeSpent > 50) {
+            timeSpent = 0;
+            System.out.println("TIMEOUT");
             return StepResult.STUCK;
         }
         if (destination == null) {
@@ -95,40 +96,10 @@ public class Movement {
         }
         Direction dir = rc.getLocation().directionTo(destination);
         if (rp.taxicab(rc.getLocation(), destination) <= requiredDistance) {
+            System.out.println("I am at " + rc.getLocation() + " needed to get to " + destination + " in " +requiredDistance);
             return StepResult.DONE;
         }
         return stepAvoidingSeen(dir);
-    }
-
-    /**
-     * Chooses a direction to explore based on map edges, water, elevation, nearby units
-     * TODO
-     *
-     * @return a direction to explore
-     */
-    Direction pickExploreDirection() {
-        String dir = "";
-        MapLocation current = rc.getLocation();
-        int sightRadiusSquared = rc.getCurrentSensorRadiusSquared();
-
-        //first check if near edge of map, we don't want to move towards the edge when there's already nothing there
-        if ((MAP_HEIGHT - current.y) * (MAP_HEIGHT - current.y) < sightRadiusSquared) { //can see the north edge of the map, must move south
-
-        } else if (current.y < sightRadiusSquared) { //can see the south edge of the map, must move north
-
-        }
-        if (MAP_WIDTH - current.x < sightRadiusSquared) { //can see the east edge of the map, must move west
-            dir += "WEST";
-        } else if (current.x < sightRadiusSquared) { //can see the west edge of the map, must move east
-            dir += "EAST";
-        }
-        if (!dir.equals("")) {
-            return Direction.valueOf(dir);
-        }
-        //not near the edge of the map, so check for nearby robots
-
-        //not near edge of map, no nearby robots
-        return this.randomDirection();
     }
 
     public StepResult randomMove() throws GameActionException {
@@ -140,17 +111,26 @@ public class Movement {
 
 
     private StepResult stepAvoidingSeen(Direction exploreDir) throws GameActionException {
+        System.out.println("Want to move in direction " + exploreDir + " to get to " + destination);
         for (Direction d : Movement.directionsOf(exploreDir)) {
             if (!seen.contains(rc.getLocation().add(d)) && tryMove(d)) {
                 return StepResult.MOVED;
             }
         }
-        for (Direction d : Movement.directionsOf(exploreDir)) {
-            //maybe we got trapped in locations we've been to, but there is still a path
-            if (tryMove(d)) {
-                return StepResult.MOVED;
+        if (rc instanceof Landscaper) {
+            if (rc.senseRobotAtLocation(rc.getLocation().add(exploreDir)) == null) {
+                while (rc.senseElevation(rc.getLocation()) > rc.senseElevation(rc.getLocation().add(exploreDir))) {
+                    ((Landscaper) rc).tryDepositDirt(exploreDir);
+                }
+                if (RobotPlayer.box(rc.getLocation().add(exploreDir), HQLocation) > 1) {
+                    while (rc.senseElevation(rc.getLocation()) < rc.senseElevation(rc.getLocation().add(exploreDir))) {
+                        ((Landscaper) rc).tryDigDirt(exploreDir);
+                    }
+                }
             }
         }
+        seen.clear();
+        System.out.println("NOWHERE UNSEEN");
         return StepResult.STUCK;
     }
 
@@ -168,13 +148,6 @@ public class Movement {
             Direction.WEST,
             Direction.NORTHWEST,
     };
-    /**
-     * Finds the direction from a location to another
-     *
-     * @param a a location on the map
-     * @param b another location on the map
-     * @return the direction from a to b
-     */
 
     /**
      * Attempts to move in a given direction. Fails if it is impossible or would lead to walking into water.
@@ -184,6 +157,9 @@ public class Movement {
      * @throws GameActionException
      */
     boolean tryMove(Direction dir) throws GameActionException {
+        if (rc.getType() == RobotType.MINER && rc.getRoundNum() > HQ_WALL_PHASE && box(rc.getLocation().add(dir), HQLocation) < 3) {
+            return false;
+        }
         while (!rc.isReady()) {
             rp.endTurn();
         }
@@ -193,7 +169,8 @@ public class Movement {
                 rp.endTurn();
             }
             return true;
-        } else return false;
+        }
+        return false;
     }
 
     /**
@@ -299,4 +276,36 @@ public class Movement {
     Direction randomDirection() {
         return Movement.directions[(int) (Math.random() * Movement.directions.length)];
     }
+
+    /**
+     * Chooses a direction to explore based on map edges, water, elevation, nearby units
+     * TODO
+     *
+     * @return a direction to explore
+     */
+    Direction pickExploreDirection() {
+        String dir = "";
+        MapLocation current = rc.getLocation();
+        int sightRadiusSquared = rc.getCurrentSensorRadiusSquared();
+
+        //first check if near edge of map, we don't want to move towards the edge when there's already nothing there
+        if ((MAP_HEIGHT - current.y) * (MAP_HEIGHT - current.y) < sightRadiusSquared) { //can see the north edge of the map, must move south
+
+        } else if (current.y < sightRadiusSquared) { //can see the south edge of the map, must move north
+
+        }
+        if (MAP_WIDTH - current.x < sightRadiusSquared) { //can see the east edge of the map, must move west
+            dir += "WEST";
+        } else if (current.x < sightRadiusSquared) { //can see the west edge of the map, must move east
+            dir += "EAST";
+        }
+        if (!dir.equals("")) {
+            return Direction.valueOf(dir);
+        }
+        //not near the edge of the map, so check for nearby robots
+
+        //not near edge of map, no nearby robots
+        return this.randomDirection();
+    }
+
 }

@@ -57,8 +57,10 @@ public class Miner extends RobotPlayer {
         wardOffFoes();
         if (sr != Movement.StepResult.DONE) {
             if (sr == Movement.StepResult.STUCK) {
+                System.out.println("New movement");
+                g = Goal.None;
+                updateGoal();
                 movement = new Movement(this);
-                System.out.println("EXPLORE TIME");
             }
         }
     }
@@ -68,7 +70,7 @@ public class Miner extends RobotPlayer {
      *
      * @return the location of the nearest refinery
      */
-    MapLocation nearestRefinery() {
+    MapLocation nearestRefinery() throws GameActionException {
         MapLocation robot = rc.getLocation();
         MapLocation nearRef = null;
         int minD = 100000;
@@ -85,7 +87,12 @@ public class Miner extends RobotPlayer {
         if (nearRef != null) {
             refinery = nearRef;
         } else {
+            System.out.println(soup + " " + rc.getLocation());
+            if (soup == null) {
+                soup = nearestSoup();
+            }
             if (soup != null && box(soup, rc.getLocation()) < 2) {
+                System.out.println("Wanna build refinery...");
                 MapLocation ml = BuildUnits.considerBuild(this, RobotType.REFINERY);
                 if (ml != null) {
                     refinery = ml;
@@ -95,34 +102,31 @@ public class Miner extends RobotPlayer {
         return refinery;
     }
 
+    MapLocation nearestSoup() throws GameActionException {
+        for (MapLocation ml : rc.senseNearbySoup()) {
+            if (rc.senseRobotAtLocation(ml) == null && (rc.getRoundNum() < HQ_WALL_PHASE || box(HQLocation, ml) >= 3)) {
+                soup = ml;
+                return soup;
+            }
+        }
+        return null;
+    }
+
     /**
      * @throws GameActionException
      */
     void updateGoal() throws GameActionException {
-        thinkAboutBuildingStuff();
-        MapLocation goal = soup;
-        System.out.println("MINED? " + mined());
-        if (mined()) {
-            goal = nearestRefinery();
-        } else {
-            for (MapLocation ml : inSight()) {
-                if (rc.canSenseLocation(ml) && rc.senseSoup(ml) > 0 && rc.senseRobotAtLocation(ml) == null
-                        && (rc.getRoundNum() < HQ_WALL_PHASE || box(HQLocation, ml) >= 3)) {
-                    goal = ml;
-                    soup = goal;
-                    System.out.println("Found nice soup");
-                    break;
-                }
+        MapLocation goal = mined() ? nearestRefinery() : nearestSoup();
+        if (g == Goal.None && goal != null) {
+            movement = new Movement(this, goal, 1);
+            if (mined()) {
+                g = Goal.Refine;
+            } else {
+                g = Goal.Mine;
             }
-            System.out.println("Found no soup");
-        }
-        if (mined()) {
-            g = Goal.Refine;
-        } else {
-            g = Goal.Mine;
         }
         printGoal();
-        movement = new Movement(this, goal, 1);
+
     }
 
     void printGoal() {
@@ -159,6 +163,7 @@ public class Miner extends RobotPlayer {
                 refinery = null;
             }
             //stay away from HQ and let landscapers do their thing
+            System.out.println("Leaving HQ");
             Movement m = new Movement(this, HQLocation.directionTo(rc.getLocation()));
             while (box(HQLocation, rc.getLocation()) < 3) {
                 m.step();
@@ -175,10 +180,11 @@ public class Miner extends RobotPlayer {
         if (refinery != null && rc.canSenseLocation(refinery) &&
                 rc.senseRobotAtLocation(refinery).type != RobotType.REFINERY) {
             refinery = null;
-        } else if (soup != null && (rc.canSenseLocation(soup) && rc.senseSoup(soup) == 0 ||
+        } else if (soup != null && (rc.canSenseLocation(soup) && rc.senseFlooding(soup) || rc.senseSoup(soup) == 0 ||
                 (rc.getRoundNum() < HQ_WALL_PHASE || box(HQLocation, rc.getLocation()) < 3))) {
             soup = null;
         }
+        g = Goal.None;
         updateGoal();
     }
 
